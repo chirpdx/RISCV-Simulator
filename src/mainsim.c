@@ -1,13 +1,17 @@
 #include <stdio.h>
 #include <string.h>
+
+int display_regs(unsigned int regs[32], unsigned int pc);
+
 void main(int argc,char *argv[] ){
 	char source[] = "../tests/"; //hard coded sorce for mem
 	char buffer[32];
 	int address;
-	int unsigned inst;
+	unsigned int inst;
 	char *token;
-	int unsigned pc = 0;
-	int sp;
+	unsigned int pc = 0;
+	unsigned int sp;
+	unsigned int x[32] = {0};
 	if ( (strcmp(argv[1],"-mem") == 0) && (strcmp(argv[3],"-pc") == 0) && (strcmp(argv[5],"-sp") == 0)){
 		strcat(source, argv[2]);
 		pc = (int)strtol(argv[4], NULL, 16);
@@ -49,7 +53,7 @@ void main(int argc,char *argv[] ){
 	}
 	FILE *fp = fopen(source,"r");
 	printf("PC Value(represented in hex):%x\n", pc);
-	printf("Stack pointer Value(represented in decimal):%d\n",sp );
+	printf("Stack pointer Value(represented in decimal):%x\n",sp );
 	printf("Number of arguments(represented in decimal):%d\n",(argc-1)); //not needed
 
 	while ( fgets(buffer,32,fp) != NULL){
@@ -65,4 +69,17 @@ void main(int argc,char *argv[] ){
 		printf("From inst : %x\n\n",inst);
 	}
 	fclose(fp);
+	
+	x[1] = 64;
+	display_regs(x, pc);
+}
+
+int display_regs(unsigned int regs[32], unsigned int pc){
+	int i = 0;
+	printf("pc  : 0x%08x\n", pc);
+	for(i = 0; i < 32; i++)
+	{
+		printf("x%2d : 0x%08x\n", i, regs[i]);
+	}
+	return 0;
 }

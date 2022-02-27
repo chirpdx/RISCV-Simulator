@@ -40,6 +40,8 @@ typedef struct{
 int DisplayRegs(unsigned int regs[32], unsigned int pc);
 AllDecodeFields DecodeInst(unsigned int IR);
 unsigned int Execute(AllDecodeFields df, unsigned int regs[32], unsigned int pc);
+unsigned int ReadMem(unsigned int *umem, unsigned int raddr);
+int WriteMem(unsigned int *umem, unsigned int waddr, unsigned int writevalue);
 
 void main(int argc,char *argv[] ){
 	char source[] = "../tests/"; //hard coded sorce for mem
@@ -113,26 +115,30 @@ void main(int argc,char *argv[] ){
 	//template
 	x[0] = 664;
 	x[spindex]	= sp;
-	
+	unsigned int readvaluetemp;
 	AllDecodeFields decodedall;
 	pc = 0;
 	do
 	{
-		IR = instruction[pc];
+		IR = instruction[pc/4];
+		readvaluetemp = ReadMem(instruction, pc);
+		printf("after readmem function: %u\n",readvaluetemp);
 		printf("IR  : 0x%08x\n", IR);
-		pc = pc + 1;
+		pc = pc + 4;
 		decodedall = DecodeInst(IR);
 		pc = Execute(decodedall, x, pc);
 		//printf("%x\n",decodedall.opcode);
 	}
 	while(IR != 65345);
+	WriteMem(instruction, 12, 65535);
+	printf("after writemem : %u\n", instruction[12/4]);
 	//DisplayRegs(x, pc);
 	//printf("SP = 0x%08u\n", x[spindex]);	// spindex is stack pointer index
 }
 
 int DisplayRegs(unsigned int regs[32], unsigned int pc){
 	int i = 0;
-	printf("pc  : 0x%08x\n", pc*4);
+	printf("pc  : 0x%08x\n", pc);
 	for(i = 0; i < 32; i++)
 	{
 		printf("x%2d : 0x%08x\n", i, regs[i]);
@@ -147,7 +153,7 @@ AllDecodeFields DecodeInst(unsigned int IR){
 	printf("opcode = 0x%02x\n",opcode);
 	switch(opcode)
 	{
-		case 0x33://make this for Rtype
+		case 0x33://for Rtype
 			df.opcode	= opcode;
 			df.rd		= (IR & rdmask)		>> 7;
 			df.funct3	= (IR & funct3mask)	>> 12;
@@ -155,7 +161,9 @@ AllDecodeFields DecodeInst(unsigned int IR){
 			df.rs2		= (IR & rs2mask)	>> 20;
 			df.funct7	= (IR & funct7mask)	>> 25;
 			break;
-		case 118://make this for Itype
+		case 0x03://for Itype
+		case 0x13:
+		case 0x67:
 			df.opcode	= opcode;
 			df.rd		= (IR & rdmask)		>> 7;
 			df.funct3	= (IR & funct3mask)	>> 12;
@@ -177,7 +185,7 @@ AllDecodeFields DecodeInst(unsigned int IR){
 }
 
 unsigned int Execute(AllDecodeFields df, unsigned int regs[32], unsigned int pc){
-	//printf("pc in Execute  : 0x%08x\n", pc*4);
+	//printf("pc in Execute  : 0x%08x\n", pc);
 	switch(df.opcode)
 	{
 		case 0x33://make this for Rtype
@@ -188,16 +196,25 @@ unsigned int Execute(AllDecodeFields df, unsigned int regs[32], unsigned int pc)
 						regs[df.rd] = regs[df.rs1] - regs[df.rs2];
 					else //check fields in specification
 						regs[df.rd] = regs[df.rs1] + regs[df.rs2];
+					break;
+				default:
+					break;
 			}
 			break;
-		case 0x36://make this for Stype// change below conditions based on it
+		case 0x03://for Itype
+		case 0x13:
+		case 0x67:// change below conditions based on it
 			switch(df.funct3)
 			{
-				case 0x0:
-					if(df.funct7)
-						regs[df.rd] = regs[df.rs1] - regs[df.rs2];
-					else //check fields in specification
-						regs[df.rd] = regs[df.rs1] + regs[df.rs2];
+				case 0x01: //shamt and shift
+				case 0x03:
+					break;
+				case 0x00:
+					break;
+				case 0x02:
+					break;
+				default:
+					break;
 			}
 			break;
 		default:
@@ -205,4 +222,23 @@ unsigned int Execute(AllDecodeFields df, unsigned int regs[32], unsigned int pc)
 			break;
 	}
 	return pc;
+}
+
+unsigned int ReadMem(unsigned int *umem, unsigned int raddr){
+	unsigned int readvalue;
+	if(raddr <= 65535)
+		//printf("In readmem function: %u\n",*(umem + raddr/4));
+		readvalue = *(umem + raddr/4);
+	else
+		printf("!!!!!!!ReadAddress Error\n");
+	return readvalue;
+}
+
+int WriteMem(unsigned int *umem, unsigned int waddr, unsigned int writevalue){
+	//printf("Writemem: %u\n",waddr);
+	if(waddr <= 65535)
+		*(umem + waddr/4) = writevalue;
+	else
+		printf("!!!!!!!WriteAddress Error\n");
+	return 0;
 }

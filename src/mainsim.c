@@ -49,47 +49,91 @@ void main(int argc,char *argv[] ){
 	int address;
 	unsigned int inst;
 	char *token;
+	unsigned int inst_mem[16384] = {0}; //64K Mem
 	unsigned int pc = 0;
 	unsigned int sp;
 	unsigned int x[32] = {0};
-	if ( (strcmp(argv[1],"-mem") == 0) && (strcmp(argv[3],"-pc") == 0) && (strcmp(argv[5],"-sp") == 0)){
-		strcat(source, argv[2]);
-		pc = (int)strtol(argv[4], NULL, 16);
-		sp = (int)strtol(argv[6], NULL, 10);
-		printf("File Name:%s\n",argv[2]); 
+	unsigned int i;
+	if (argc == 7){
+		printf("Only 3 arguments is passed\n");
+		if ( (strcmp(argv[1],"-mem") == 0) && (strcmp(argv[3],"-pc") == 0) && (strcmp(argv[5],"-sp") == 0)){
+			strcat(source, argv[2]);
+			pc = (int)strtol(argv[4], NULL, 16);
+			sp = (int)strtol(argv[6], NULL, 10);
+			printf("File Name:%s\n",argv[2]);
+			}
+		else if ((strcmp(argv[1],"-mem") == 0) && (strcmp(argv[5],"-pc") == 0) && (strcmp(argv[3],"-sp") == 0)){
+			strcat(source, argv[2]);
+			pc = (int)strtol(argv[6], NULL, 16);
+			sp = (int)strtol(argv[4], NULL, 10);
+			printf("File Name:%s\n",argv[2]);
+			}
+		else if ((strcmp(argv[5],"-mem") == 0) && (strcmp(argv[1],"-pc") == 0) && (strcmp(argv[3],"-sp") == 0)){
+			strcat(source, argv[6]);
+			pc = (int)strtol(argv[2], NULL, 16);
+			sp = (int)strtol(argv[4], NULL, 10);
+			printf("File Name:%s\n",argv[6]);
+			}
+		else if ((strcmp(argv[5],"-mem") == 0) && (strcmp(argv[3],"-pc") == 0) && (strcmp(argv[1],"-sp") == 0)){
+			strcat(source, argv[6]);
+			pc = (int)strtol(argv[4], NULL, 16);
+			sp = (int)strtol(argv[2], NULL, 10);
+			printf("File Name:%s\n",argv[6]);
+			}
+		else if ((strcmp(argv[3],"-mem") == 0) && (strcmp(argv[5],"-pc") == 0) && (strcmp(argv[1],"-sp") == 0)){
+			strcat(source, argv[4]);
+			pc = (int)strtol(argv[6], NULL, 16);
+			sp = (int)strtol(argv[2], NULL, 10);
+			printf("File Name:%s\n",argv[4]);
+			}
+		else if ((strcmp(argv[3],"-mem") == 0) && (strcmp(argv[1],"-pc") == 0) && (strcmp(argv[5],"-sp") == 0)){
+			strcat(source, argv[4]);
+			pc = (int)strtol(argv[2], NULL, 16);
+			sp = (int)strtol(argv[6], NULL, 10);
+			printf("File Name:%s\n",argv[4]);
+		}
 	}
-	else if ((strcmp(argv[1],"-mem") == 0) && (strcmp(argv[5],"-pc") == 0) && (strcmp(argv[3],"-sp") == 0)){
-		strcat(source, argv[2]);
-		pc = (int)strtol(argv[6], NULL, 16);
-		sp = (int)strtol(argv[4], NULL, 10); 
-		printf("File Name:%s\n",argv[2]);
+	else if (argc == 5){
+		printf("Only two arguments is passed\n");
+		if ( (strcmp(argv[1],"-mem") == 0) && (strcmp(argv[3],"-pc") == 0)){
+			strcat(source, argv[2]);
+			pc = (int)strtol(argv[4], NULL, 16);
+			}
+		else if ((strcmp(argv[1],"-mem") == 0) && (strcmp(argv[3],"-sp") == 0)){
+			strcat(source, argv[2]);
+			sp = (int)strtol(argv[4], NULL, 10);
+			}
+		else if ((strcmp(argv[1],"-pc") == 0) && (strcmp(argv[3],"-sp") == 0)){
+			pc = (int)strtol(argv[2], NULL, 16);
+			sp = (int)strtol(argv[4], NULL, 10);
+			}
+		else if ((strcmp(argv[1],"-pc") == 0) && (strcmp(argv[3],"-mem") == 0)){
+			strcat(source, argv[4]);
+			pc = (int)strtol(argv[2], NULL, 16);
+			}
+		else if ((strcmp(argv[1],"-sp") == 0) && (strcmp(argv[3],"-pc") == 0)){
+			pc = (int)strtol(argv[4], NULL, 16);
+			sp = (int)strtol(argv[2], NULL, 10);
+			}
+		else if ((strcmp(argv[1],"-sp") == 0) && (strcmp(argv[3],"-mem") == 0)){
+			strcat(source, argv[2]);
+			sp = (int)strtol(argv[4], NULL, 10);
+			}
 	}
-	else if ((strcmp(argv[5],"-mem") == 0) && (strcmp(argv[1],"-pc") == 0) && (strcmp(argv[3],"-sp") == 0)){
-		strcat(source, argv[6]);
-		pc = (int)strtol(argv[2], NULL, 16);
-		sp = (int)strtol(argv[4], NULL, 10); 
-		printf("File Name:%s\n",argv[6]);
+	else if (argc == 3){
+		printf("Only one arguments is passed\n");
+		if ( (strcmp(argv[1],"-mem") == 0)){
+			strcat(source, argv[2]);
+			}
+		else if ((strcmp(argv[1],"-pc") == 0)){
+			pc = (int)strtol(argv[2], NULL, 16);
+			}
+		else if ((strcmp(argv[1],"-sp") == 0)){
+			sp = (int)strtol(argv[2], NULL, 10);
+			}
 	}
-	else if ((strcmp(argv[5],"-mem") == 0) && (strcmp(argv[3],"-pc") == 0) && (strcmp(argv[1],"-sp") == 0)){
-		strcat(source, argv[6]);
-		pc = (int)strtol(argv[4], NULL, 16);
-		sp = (int)strtol(argv[2], NULL, 10);
-		printf("File Name:%s\n",argv[6]); 
-	}
-	else if ((strcmp(argv[3],"-mem") == 0) && (strcmp(argv[5],"-pc") == 0) && (strcmp(argv[1],"-sp") == 0)){
-		strcat(source, argv[4]);
-		pc = (int)strtol(argv[6], NULL, 16);
-		sp = (int)strtol(argv[2], NULL, 10); 
-		printf("File Name:%s\n",argv[4]);
-	}
-	else if ((strcmp(argv[3],"-mem") == 0) && (strcmp(argv[1],"-pc") == 0) && (strcmp(argv[5],"-sp") == 0)){
-		strcat(source, argv[4]);
-		pc = (int)strtol(argv[2], NULL, 16);
-		sp = (int)strtol(argv[6], NULL, 10); 
-		printf("File Name:%s\n",argv[4]);
-	}
-	else{
-		printf("No conditions passed\n");
+	else {
+	printf("No conditions passed Using Default value\n");
 	}
 	FILE *fp = fopen(source,"r");
 	printf("PC Value(represented in hex):%x\n", pc);
@@ -106,12 +150,16 @@ void main(int argc,char *argv[] ){
 		token = strtok(NULL," ");
 		//printf("Expecting Inst:%s",token);
 		inst = (int)strtol(token, NULL, 16);
+		inst_mem[address/4] = inst;
 		//printf("From inst : %x\n\n",inst);
 	}
 	fclose(fp);
+	for (i = 0; i<100; i++){
+		printf("Element [%d] = %x\n",i,inst_mem[i]);
+	}
 	unsigned int instruction[] = {10035,37878,65345};
 	unsigned int IR = 0;
-	
+
 	//template
 	x[0] = 664;
 	x[spindex]	= sp;
@@ -120,8 +168,8 @@ void main(int argc,char *argv[] ){
 	pc = 0;
 	do
 	{
-		IR = instruction[pc/4];
-		readvaluetemp = ReadMem(instruction, pc);
+		IR = inst_mem[pc/4];
+		readvaluetemp = ReadMem(inst_mem, pc);
 		printf("after readmem function: %u\n",readvaluetemp);
 		printf("IR  : 0x%08x\n", IR);
 		pc = pc + 4;
@@ -129,7 +177,7 @@ void main(int argc,char *argv[] ){
 		pc = Execute(decodedall, x, pc);
 		//printf("%x\n",decodedall.opcode);
 	}
-	while(IR != 65345);
+	while(IR != 0x8067);  // 0x8067 for the time being. checking inst_mem
 	WriteMem(instruction, 12, 65535);
 	printf("after writemem : %u\n", instruction[12/4]);
 	//DisplayRegs(x, pc);

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define opcodemask  0x0000007f
 #define rdmask      0x00000f80
@@ -39,7 +40,7 @@ typedef struct{
 
 int DisplayRegs(unsigned int regs[32], unsigned int pc);
 AllDecodeFields DecodeInst(unsigned int IR);
-unsigned int Execute(AllDecodeFields df, unsigned int regs[32], unsigned int pc);
+unsigned int Execute(AllDecodeFields df, unsigned int *umem, unsigned int regs[32], unsigned int pc);
 unsigned int ReadMem(unsigned int *umem, unsigned int raddr);
 int WriteMem(unsigned int *umem, unsigned int waddr, unsigned int writevalue);
 
@@ -52,8 +53,9 @@ void main(int argc,char *argv[] ){
 	unsigned int inst_mem[16384] = {0}; //64K Mem
 	unsigned int pc = 0;
 	unsigned int sp;
-	unsigned int x[32] = {0};
+	unsigned int x[32] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,0,1,2,3,4,5,6,7,8,9,10};
 	unsigned int i;
+	//printf();
 	if (argc == 7){
 		printf("Only 3 arguments is passed\n");
 		if ( (strcmp(argv[1],"-mem") == 0) && (strcmp(argv[3],"-pc") == 0) && (strcmp(argv[5],"-sp") == 0)){
@@ -154,42 +156,46 @@ void main(int argc,char *argv[] ){
 		//printf("From inst : %x\n\n",inst);
 	}
 	fclose(fp);
-	for (i = 0; i<100; i++){
+	for (i = 0; i<20; i++){
 		printf("Element [%d] = %x\n",i,inst_mem[i]);
 	}
-	unsigned int instruction[] = {10035,37878,65345};
+	//unsigned int instruction[] = {10035,37878,65345};
 	unsigned int IR = 0;
 
 	//template
 	x[0] = 664;
 	x[spindex]	= sp;
-	unsigned int readvaluetemp;
+	printf("%x\n",x[16]);
 	AllDecodeFields decodedall;
 	pc = 0;
+	DisplayRegs(x, pc);
 	do
 	{
 		IR = inst_mem[pc/4];
-		readvaluetemp = ReadMem(inst_mem, pc);
-		printf("after readmem function: %u\n",readvaluetemp);
 		printf("IR  : 0x%08x\n", IR);
 		pc = pc + 4;
 		decodedall = DecodeInst(IR);
-		pc = Execute(decodedall, x, pc);
+		pc = Execute(decodedall, inst_mem, x, pc);
+		DisplayRegs(x, pc);
 		//printf("%x\n",decodedall.opcode);
 	}
-	while(IR != 0x8067);  // 0x8067 for the time being. checking inst_mem
-	WriteMem(instruction, 12, 65535);
-	printf("after writemem : %u\n", instruction[12/4]);
+	while(!(IR == 0x8067 && x[31]== 10));
+	//WriteMem(instruction, 12, 65535);
+	//printf("after writemem : %u\n", instruction[12/4]);
 	//DisplayRegs(x, pc);
 	//printf("SP = 0x%08u\n", x[spindex]);	// spindex is stack pointer index
 }
 
 int DisplayRegs(unsigned int regs[32], unsigned int pc){
 	int i = 0;
+	int j = 0;
 	printf("pc  : 0x%08x\n", pc);
-	for(i = 0; i < 32; i++)
+	
+	for(i = 0; i < 8; i++)
 	{
-		printf("x%2d : 0x%08x\n", i, regs[i]);
+		for(j = 0; j < 4; j++)
+			printf("\tx%2d : 0x%08x", i*4 + j, regs[i*4 + j]);
+		printf("\n");
 	}
 	return 0;
 }
@@ -210,7 +216,19 @@ AllDecodeFields DecodeInst(unsigned int IR){
 			df.funct7	= (IR & funct7mask)	>> 25;
 			break;
 		case 0x03://for Itype
+			df.opcode	= opcode;
+			df.rd		= (IR & rdmask)		>> 7;
+			df.funct3	= (IR & funct3mask)	>> 12;
+			df.rs1		= (IR & rs1mask)	>> 15;
+			df.imm		= (IR & imm12Imask)	>> 20;
+			break;
 		case 0x13:
+			df.opcode	= opcode;
+			df.rd		= (IR & rdmask)		>> 7;
+			df.funct3	= (IR & funct3mask)	>> 12;
+			df.rs1		= (IR & rs1mask)	>> 15;
+			df.imm		= (IR & imm12Imask)	>> 20;
+			break;
 		case 0x67:
 			df.opcode	= opcode;
 			df.rd		= (IR & rdmask)		>> 7;
@@ -232,7 +250,7 @@ AllDecodeFields DecodeInst(unsigned int IR){
 	return df;
 }
 
-unsigned int Execute(AllDecodeFields df, unsigned int regs[32], unsigned int pc){
+unsigned int Execute(AllDecodeFields df, unsigned int *umem, unsigned int regs[32], unsigned int pc){
 	//printf("pc in Execute  : 0x%08x\n", pc);
 	switch(df.opcode)
 	{
@@ -245,12 +263,151 @@ unsigned int Execute(AllDecodeFields df, unsigned int regs[32], unsigned int pc)
 					else //check fields in specification
 						regs[df.rd] = regs[df.rs1] + regs[df.rs2];
 					break;
+				case 0x4:
+					regs[df.rd] = regs[df.rs1] ^ regs[df.rs2];
+					break;
+				case 0x6:
+					regs[df.rd] = regs[df.rs1] | regs[df.rs2];
+					break;
+				case 0x7:
+					regs[df.rd] = regs[df.rs1] & regs[df.rs2];
+					break;
+				case 0x1:
+					regs[df.rd] = regs[df.rs1] << regs[df.rs2];
+					break;
+				case 0x5:
+					if(df.funct7)
+						regs[df.rd] = regs[df.rs1] >> regs[df.rs2];
+					else //check fields in specification
+						regs[df.rd] = regs[df.rs1] >> regs[df.rs2];  //////////////////////MSB EXTENDS
+					break;
+				case 0x2:
+					regs[df.rd] = (regs[df.rs1] < regs[df.rs2]) ? 1:0;
+					break;
+				case 0x3:
+					regs[df.rd] = (regs[df.rs1] < regs[df.rs2]) ? 1:0; /////////////////////zero extends
+					break;
+
 				default:
 					break;
 			}
 			break;
-		case 0x03://for Itype
+
 		case 0x13:
+			switch(df.funct3)
+			{
+				case 0x0:
+					regs[df.rd] = regs[df.rs1] + regs[df.imm];
+					break;
+				case 0x4:
+					regs[df.rd] = regs[df.rs1] ^ regs[df.imm];
+					break;
+				case 0x6:
+					regs[df.rd] = regs[df.rs1] | regs[df.imm];
+					break;
+				case 0x7:
+					regs[df.rd] = regs[df.rs1] & regs[df.imm];
+					break;
+				case 0x1:
+					if (!(df.imm & 0xfe0)) //!
+						regs[df.rd] = regs[df.rs1] << regs[df.imm]&0x1f;////////////
+					break;
+				case 0x5:
+					if (!(df.imm & 0xfe0))
+						regs[df.rd] = regs[df.rs1] >> regs[df.imm]&0x1f;
+					else //check fields in specification
+						regs[df.rd] = regs[df.rs1] >> regs[df.imm]&0x1f;  //////////////////////MSB EXTENDS
+					break;
+				case 0x2:
+					regs[df.rd] = (regs[df.rs1] < regs[df.imm]) ? 1:0;////////////
+					break;
+				case 0x3:
+					regs[df.rd] = (regs[df.rs1] < regs[df.imm]) ? 1:0; /////////////////////zero extends
+					break;
+
+				default:
+					break;
+			}
+			break;
+
+		case 0x03://for Itype
+			switch(df.funct3)
+			{
+				case 0x0:
+					regs[df.rd] = *(umem+(df.rs1+df.imm)/4) & 0x80 ? ((*(umem+(df.rs1+df.imm)/4))&0xff)|0xffff00 : (*(umem+(df.rs1+df.imm)/4))&0xff;
+					break;
+				case 0x1:
+					regs[df.rd] = *(umem+(df.rs1+df.imm)) & 0x8000 ? ((*(umem+(df.rs1+df.imm)))&0xffff)|0xff0000 : (*(umem+(df.rs1+df.imm)))&0xffff;
+					break;
+				case 0x2:
+					regs[df.rd] = (*(umem+(df.rs1+df.imm)))&0xffffff;
+					break;
+				case 0x4:
+					regs[df.rd] = (*(umem+(df.rs1+df.imm)))&0xff;  /////////////////////zero extends
+					break;
+				case 0x5:
+					regs[df.rd] = (*(umem+(df.rs1+df.imm)))&0xffff; /////////////////////zero extends
+					break;
+				default:
+					break;
+			}
+			break;
+
+		case 0x23://S
+			switch(df.funct3)
+			{
+				case 0x0:
+					WriteMem(umem,df.rs1+df.imm,regs[df.rs2] & 0xff);
+					//WriteMem(umem,df.rs1+df.imm,(*(umem+(df.rs1+df.imm)/4)&ffff00)|(regs[df.rs2] & 0xff))
+					//*(umem+(df.rs1+df.imm)/4) & 0x80 ? ((*(umem+(df.rs1+df.imm)/4))&0xff)|0xffff00 : (*(umem+(df.rs1+df.imm)/4))&0xff = regs[df.rs2] & 0xff;
+					break;
+				case 0x1:
+					WriteMem(umem,df.rs1+df.imm,regs[df.rs2] & 0xffff);
+					//WriteMem(umem,df.rs1+df.imm,(*(umem+(df.rs1+df.imm)/4)&ff0000)|(regs[df.rs2] & 0xffff))
+					//*(umem+(df.rs1+df.imm)) & 0x8000 ? ((*(umem+(df.rs1+df.imm)))&0xffff)|0xff0000 : (*(umem+(df.rs1+df.imm)))&0xffff = regs[df.rs2] & 0xffff;
+					break;
+				case 0x2:
+					WriteMem(umem,df.rs1+df.imm,regs[df.rs2] & 0xffffff);
+					//(*(umem+(df.rs1+df.imm)))&0xffffff = regs[df.rs2] & 0xffffff;
+					break;
+
+				default:
+					break;
+			}
+			break;
+
+		case 0xc3://B  YET TO DO
+			switch(df.funct3)
+			{
+				case 0x0:
+					if (df.rs1 == df.rs2)
+						regs[df.rd] = regs[df.rs1] + regs[df.imm];
+					break;
+				case 0x1:
+					if (df.rs1 != df.rs2)
+						regs[df.rd] = regs[df.rs1] + regs[df.imm];
+					break;
+				case 0x4:
+					if (df.rs1 < df.rs2)
+						regs[df.rd] = regs[df.rs1] + regs[df.imm];
+					break;
+				case 0x5:
+					if (df.rs1 >= df.rs2)
+						regs[df.rd] = regs[df.rs1] + regs[df.imm];
+					break;
+				case 0x6:
+					if (df.rs1 < df.rs2)
+						regs[df.rd] = regs[df.rs1] + regs[df.imm];
+					break;
+				case 0x7:
+					if (df.rs1 >= df.rs2)
+						regs[df.rd] = regs[df.rs1] + regs[df.imm];
+					break;
+
+				default:
+					break;
+			}
+			break;
 		case 0x67:// change below conditions based on it
 			switch(df.funct3)
 			{

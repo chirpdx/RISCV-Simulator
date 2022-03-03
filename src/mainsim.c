@@ -13,6 +13,11 @@
 //#define imm13Bmask
 //#define imm32Umask
 //#define imm21Jmask
+#define opralu 0x33
+#define opialu 0x13
+#define opload 0x03
+#define opstore 0x23
+#define opbranch 0x63
 
 enum othernames{zeroindex, raindex, spindex};
 
@@ -207,7 +212,7 @@ AllDecodeFields DecodeInst(unsigned int IR){
 	printf("opcode = 0x%02x\n",opcode);
 	switch(opcode)
 	{
-		case 0x33://for Rtype
+		case opralu://for Rtype
 			df.opcode	= opcode;
 			df.rd		= (IR & rdmask)		>> 7;
 			df.funct3	= (IR & funct3mask)	>> 12;
@@ -215,14 +220,14 @@ AllDecodeFields DecodeInst(unsigned int IR){
 			df.rs2		= (IR & rs2mask)	>> 20;
 			df.funct7	= (IR & funct7mask)	>> 25;
 			break;
-		case 0x03://for Itype
+		case opload://for Itype
 			df.opcode	= opcode;
 			df.rd		= (IR & rdmask)		>> 7;
 			df.funct3	= (IR & funct3mask)	>> 12;
 			df.rs1		= (IR & rs1mask)	>> 15;
 			df.imm		= (IR & imm12Imask)	>> 20;
 			break;
-		case 0x13:
+		case opialu:
 			df.opcode	= opcode;
 			df.rd		= (IR & rdmask)		>> 7;
 			df.funct3	= (IR & funct3mask)	>> 12;
@@ -236,7 +241,7 @@ AllDecodeFields DecodeInst(unsigned int IR){
 			df.rs1		= (IR & rs1mask)	>> 15;
 			df.imm		= (IR & imm12Imask)	>> 20;
 			break;
-		case 65:// make thus for Stype
+		case opstore:// make thus for Stype
 			df.opcode	= opcode;
 			df.funct3	= (IR & funct3mask)	>> 12;
 			df.rs1		= (IR & rs1mask)	>> 15;
@@ -254,7 +259,7 @@ unsigned int Execute(AllDecodeFields df, unsigned int *umem, unsigned int regs[3
 	//printf("pc in Execute  : 0x%08x\n", pc);
 	switch(df.opcode)
 	{
-		case 0x33://make this for Rtype
+		case opralu:
 			switch(df.funct3)
 			{
 				case 0x0:
@@ -293,7 +298,7 @@ unsigned int Execute(AllDecodeFields df, unsigned int *umem, unsigned int regs[3
 			}
 			break;
 
-		case 0x13:
+		case opialu:
 			switch(df.funct3)
 			{
 				case 0x0:
@@ -330,7 +335,7 @@ unsigned int Execute(AllDecodeFields df, unsigned int *umem, unsigned int regs[3
 			}
 			break;
 
-		case 0x03://for Itype
+		case opload:
 			switch(df.funct3)
 			{
 				case 0x0:
@@ -353,7 +358,7 @@ unsigned int Execute(AllDecodeFields df, unsigned int *umem, unsigned int regs[3
 			}
 			break;
 
-		case 0x23://S
+		case opstore:
 			switch(df.funct3)
 			{
 				case 0x0:
@@ -376,7 +381,7 @@ unsigned int Execute(AllDecodeFields df, unsigned int *umem, unsigned int regs[3
 			}
 			break;
 
-		case 0xc3://B  YET TO DO
+		case opbranch://B  YET TO DO
 			switch(df.funct3)
 			{
 				case 0x0:

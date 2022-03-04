@@ -173,7 +173,7 @@ void main(int argc,char *argv[] ){
 	printf("%x\n",x[16]);
 	AllDecodeFields decodedall;
 	pc = 0;
-	DisplayRegs(x, pc);
+	//DisplayRegs(x, pc);
 	do
 	{
 		IR = inst_mem[pc/4];
@@ -248,15 +248,24 @@ AllDecodeFields DecodeInst(unsigned int IR){
 			df.rs2		= (IR & rs2mask)	>> 20;
 			df.imm		= ((IR & rdmask)	>> 7)|((IR & funct7mask)	>> 18);
 			break;
+		case opbranch:
+			printf("Branch decode\n");
+			df.opcode	= opcode;
+			df.funct3	= (IR & funct3mask)	>> 12;
+			df.rs1		= (IR & rs1mask)	>> 15;
+			df.rs2		= (IR & rs2mask)	>> 20;
+			df.imm = 0;
+			df.imm		= (((IR & 0x80000000)	>> 19) ? 0xfffff000 : 0x00000000)| ((IR & 0x7e000000)	>> 20)|((IR & 0x00000f00)	>> 7) | ((IR & 0x00000080)	<< 4);
+			break;
 		default:
-			printf("Entered default\n");
+			printf("Entered default in decode\n");
 			break;
 	}
 	return df;
 }
 
 unsigned int Execute(AllDecodeFields df, unsigned int *umem, unsigned int regs[32], unsigned int pc){
-	//printf("pc in Execute  : 0x%08x\n", pc);
+printf("pc in Execute  : 0x%08x\n", pc);
 	switch(df.opcode)
 	{
 		case opralu:
@@ -382,34 +391,36 @@ unsigned int Execute(AllDecodeFields df, unsigned int *umem, unsigned int regs[3
 			break;
 
 		case opbranch://B  YET TO DO
+			printf("Entered Branch execute funct3 = %d\n",df.funct3);
 			switch(df.funct3)
 			{
 				case 0x0:
-					if (df.rs1 == df.rs2)
-						regs[df.rd] = regs[df.rs1] + regs[df.imm];
+					if ((signed int)df.rs1 == (signed int)df.rs2)
+						pc = pc + df.imm;
 					break;
 				case 0x1:
-					if (df.rs1 != df.rs2)
-						regs[df.rd] = regs[df.rs1] + regs[df.imm];
+					if ((signed int)df.rs1 != (signed int)df.rs2)
+						pc = pc + df.imm;
 					break;
 				case 0x4:
-					if (df.rs1 < df.rs2)
-						regs[df.rd] = regs[df.rs1] + regs[df.imm];
+					if ((signed int)df.rs1 < (signed int)df.rs2)
+						pc = pc + df.imm;
 					break;
 				case 0x5:
-					if (df.rs1 >= df.rs2)
-						regs[df.rd] = regs[df.rs1] + regs[df.imm];
+					if ((signed int)df.rs1 >= (signed int)df.rs2)
+						pc = pc + df.imm;
 					break;
 				case 0x6:
 					if (df.rs1 < df.rs2)
-						regs[df.rd] = regs[df.rs1] + regs[df.imm];
+						pc = pc + df.imm;
 					break;
 				case 0x7:
 					if (df.rs1 >= df.rs2)
-						regs[df.rd] = regs[df.rs1] + regs[df.imm];
+						pc = pc + df.imm;
 					break;
 
 				default:
+					printf("funct3 default in branch execute");
 					break;
 			}
 			break;
@@ -428,9 +439,10 @@ unsigned int Execute(AllDecodeFields df, unsigned int *umem, unsigned int regs[3
 			}
 			break;
 		default:
-			printf("Entered default\n");
+			printf("Entered default in Execute\n");
 			break;
 	}
+	printf("Returning from Execute\n");
 	return pc;
 }
 

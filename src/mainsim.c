@@ -18,8 +18,8 @@
 #define opload 0x03
 #define opstore 0x23
 #define opbranch 0x63
-
-enum othernames{zeroindex, raindex, spindex};
+char regnames[32][5] = {"zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2", "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"};
+enum otherindexes{zeroindex, raindex, spindex};
 
 typedef struct{
 	unsigned int opcode;
@@ -140,7 +140,7 @@ void main(int argc,char *argv[] ){
 			}
 	}
 	else {
-	printf("No conditions passed Using Default value\n");
+		printf("No conditions passed Using Default value\n");
 	}
 	FILE *fp = fopen(source,"r");
 	printf("PC Value(represented in hex):%x\n", pc);
@@ -199,7 +199,7 @@ int DisplayRegs(unsigned int regs[32], unsigned int pc){
 	for(i = 0; i < 8; i++)
 	{
 		for(j = 0; j < 4; j++)
-			printf("\tx%2d : 0x%08x", i*4 + j, regs[i*4 + j]);
+			printf("\t%4s -> x%2d :   0x%08x", regnames[i*4 + j], i*4 + j, regs[i*4 + j]);
 		printf("\n");
 	}
 	return 0;

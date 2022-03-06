@@ -230,7 +230,7 @@ AllDecodeFields DecodeInst(unsigned int IR){
 			df.funct3	= (IR & funct3mask)	>> 12;
 			df.rs1		= (IR & rs1mask)	>> 15;
 			df.imm = 0;
-			df.imm		= (IR & imm12Imask)	>> 20;
+			df.imm		= ((IR & 0x80000000) ? 0xfffff000 : 0x00000000) | ((IR & imm12Imask)	>> 20);
 			break;
 		case opialu:
 			df.opcode	= opcode;
@@ -254,7 +254,7 @@ AllDecodeFields DecodeInst(unsigned int IR){
 			df.rs1		= (IR & rs1mask)	>> 15;
 			df.rs2		= (IR & rs2mask)	>> 20;
 			df.imm = 0;
-			df.imm		= ((IR & rdmask)	>> 7)|((IR & funct7mask)	>> 18);
+			df.imm		= ((IR & 0x80000000)	? 0xfffff000 : 0x00000000)|((IR & rdmask)	>> 7)|((IR & funct7mask)	>> 20);
 			break;
 		case opbranch:
 			df.opcode	= opcode;

@@ -409,17 +409,17 @@ printf("\npc in Execute  : 0x%08x\n", pc);
 			switch(df.funct3)
 			{
 				case 0x0:
-					WriteMem(umem,df.rs1+df.imm,regs[df.rs2] & 0xff);
+					WriteMem(umem,df.rs1+df.imm,regs[df.rs2] & 0x000000ff);
 					//WriteMem(umem,df.rs1+df.imm,(*(umem+(df.rs1+df.imm)/4)&ffff00)|(regs[df.rs2] & 0xff))
 					//*(umem+(df.rs1+df.imm)/4) & 0x80 ? ((*(umem+(df.rs1+df.imm)/4))&0xff)|0xffff00 : (*(umem+(df.rs1+df.imm)/4))&0xff = regs[df.rs2] & 0xff;
 					break;
 				case 0x1:
-					WriteMem(umem,df.rs1+df.imm,regs[df.rs2] & 0xffff);
+					WriteMem(umem,df.rs1+df.imm,regs[df.rs2] & 0x0000ffff);
 					//WriteMem(umem,df.rs1+df.imm,(*(umem+(df.rs1+df.imm)/4)&ff0000)|(regs[df.rs2] & 0xffff))
 					//*(umem+(df.rs1+df.imm)) & 0x8000 ? ((*(umem+(df.rs1+df.imm)))&0xffff)|0xff0000 : (*(umem+(df.rs1+df.imm)))&0xffff = regs[df.rs2] & 0xffff;
 					break;
 				case 0x2:
-					WriteMem(umem,df.rs1+df.imm,regs[df.rs2] & 0xffffff);
+					WriteMem(umem,df.rs1+df.imm,regs[df.rs2] & 0xffffffff);
 					//(*(umem+(df.rs1+df.imm)))&0xffffff = regs[df.rs2] & 0xffffff;
 					break;
 

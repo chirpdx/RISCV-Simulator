@@ -18,8 +18,13 @@
 #define opload 0x03
 #define opstore 0x23
 #define opbranch 0x63
+#define opj 0x6f
+#define opji 0x67
+#define oplui 0x37
+#define opauipc 0x17
+
 char regnames[32][5] = {"zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2", "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"};
-enum otherindexes{zeroindex, raindex, spindex};
+enum otherindexes{zeroindex, raindex, spindex, gpindex, tpindex, t0index, t1index, t2index, s0index, s1index,a0index, a1index, a2index, a3index, a4index, a5index, a6index, a7index, s2index, s3index, s4index, s5index, s6index, s7index, s8index, s9index, s10index, s11index, t3index, t4index, t5index, t6index};
 
 typedef struct{
 	unsigned int opcode;
@@ -50,17 +55,19 @@ unsigned int ReadMem(unsigned int *umem, unsigned int raddr);
 int WriteMem(unsigned int *umem, unsigned int waddr, unsigned int writevalue);
 
 void main(int argc,char *argv[] ){
-	char source[] = "../tests/"; //hard coded sorce for mem
+	char source[] = "../";
 	char buffer[32];
 	int address;
 	unsigned int inst;
 	char *token;
 	unsigned int inst_mem[16384] = {0}; //64K Mem
 	unsigned int pc = 0;
-	unsigned int sp;
-	unsigned int x[32] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,0,1,2,3,4,5,6,7,8,9,10};
+	unsigned int sp = 65535;
+	unsigned int x[32] = {0};
 	unsigned int i;
-	//printf();
+	#ifdef __verbose__
+		printf("Verbose mode triggered");
+	#endif
 	if (argc == 7){
 		printf("Only 3 arguments is passed\n");
 		if ( (strcmp(argv[1],"-mem") == 0) && (strcmp(argv[3],"-pc") == 0) && (strcmp(argv[5],"-sp") == 0)){
@@ -111,6 +118,7 @@ void main(int argc,char *argv[] ){
 			sp = (int)strtol(argv[4], NULL, 10);
 			}
 		else if ((strcmp(argv[1],"-pc") == 0) && (strcmp(argv[3],"-sp") == 0)){
+			strcat(source,"tests/porg.mem");
 			pc = (int)strtol(argv[2], NULL, 16);
 			sp = (int)strtol(argv[4], NULL, 10);
 			}
@@ -119,6 +127,7 @@ void main(int argc,char *argv[] ){
 			pc = (int)strtol(argv[2], NULL, 16);
 			}
 		else if ((strcmp(argv[1],"-sp") == 0) && (strcmp(argv[3],"-pc") == 0)){
+			strcat(source,"tests/porg.mem");
 			pc = (int)strtol(argv[4], NULL, 16);
 			sp = (int)strtol(argv[2], NULL, 10);
 			}
@@ -134,61 +143,55 @@ void main(int argc,char *argv[] ){
 			}
 		else if ((strcmp(argv[1],"-pc") == 0)){
 			pc = (int)strtol(argv[2], NULL, 16);
+			strcat(source,"tests/porg.mem");
 			}
 		else if ((strcmp(argv[1],"-sp") == 0)){
 			sp = (int)strtol(argv[2], NULL, 10);
+			strcat(source,"tests/porg.mem");
 			}
 	}
 	else {
 		printf("No conditions passed Using Default value\n");
+		strcat(source,"tests/porg.mem");
 	}
 	FILE *fp = fopen(source,"r");
 	printf("PC Value(represented in hex):%x\n", pc);
-	printf("Stack pointer Value(represented in decimal):%x\n",sp );
+	printf("Stack pointer Value(represented in decimal):%u\n",sp );
 	printf("Number of arguments(represented in decimal):%d\n",(argc-1)); //not needed
 
 	while ( fgets(buffer,32,fp) != NULL){
-		//printf("%s",buffer);
 		token  = strtok(buffer,":");
-		//printf("Expecting address:%s\n",token);
 		address = (int)strtol(token, NULL, 16);
-		//printf ("from add : %x\n",address);
 		
 		token = strtok(NULL," ");
-		//printf("Expecting Inst:%s",token);
-		inst = (int)strtol(token, NULL, 16);
+		inst = strtoul(token, NULL, 16);
 		inst_mem[address/4] = inst;
-		//printf("From inst : %x\n\n",inst);
 	}
 	fclose(fp);
-	for (i = 0; i<20; i++){
-		printf("Element [%d] = %x\n",i,inst_mem[i]);
-	}
-	//unsigned int instruction[] = {10035,37878,65345};
 	unsigned int IR = 0;
 
-	//template
-	x[0] = 664;
-	x[spindex]	= sp;
-	printf("%x\n",x[16]);
+	x[zeroindex] = 0;
+	x[spindex] = sp;
+	x[raindex] = 0;
 	AllDecodeFields decodedall;
-	pc = 0;
-	//DisplayRegs(x, pc);
 	do
 	{
+		x[zeroindex] = 0;
 		IR = inst_mem[pc/4];
-		printf("IR  : 0x%08x\n", IR);
 		pc = pc + 4;
 		decodedall = DecodeInst(IR);
 		pc = Execute(decodedall, inst_mem, x, pc);
+		x[zeroindex] = 0;
+		#ifdef __verbose__
+			printf("Verbose mode");
+		#endif
+		printf("IR  : 0x%08x\n", IR);
 		DisplayRegs(x, pc);
 		//printf("%x\n",decodedall.opcode);
 	}
-	while(!(IR == 0x8067 && x[31]== 10));
-	//WriteMem(instruction, 12, 65535);
-	//printf("after writemem : %u\n", instruction[12/4]);
-	//DisplayRegs(x, pc);
-	//printf("SP = 0x%08u\n", x[spindex]);	// spindex is stack pointer index
+	while(!(IR == 0x8067 && x[raindex]== 0));
+	printf("\n\nAfter Final Instruction \n\n");
+	DisplayRegs(x, pc);
 }
 
 int DisplayRegs(unsigned int regs[32], unsigned int pc){
@@ -212,19 +215,21 @@ AllDecodeFields DecodeInst(unsigned int IR){
 	printf("opcode = 0x%02x\n",opcode);
 	switch(opcode)
 	{
-		case opralu://for Rtype
+		case opralu:
 			df.opcode	= opcode;
 			df.rd		= (IR & rdmask)		>> 7;
 			df.funct3	= (IR & funct3mask)	>> 12;
 			df.rs1		= (IR & rs1mask)	>> 15;
 			df.rs2		= (IR & rs2mask)	>> 20;
 			df.funct7	= (IR & funct7mask)	>> 25;
+			df.imm = 0;
 			break;
-		case opload://for Itype
+		case opload:
 			df.opcode	= opcode;
 			df.rd		= (IR & rdmask)		>> 7;
 			df.funct3	= (IR & funct3mask)	>> 12;
 			df.rs1		= (IR & rs1mask)	>> 15;
+			df.imm = 0;
 			df.imm		= (IR & imm12Imask)	>> 20;
 			break;
 		case opialu:
@@ -232,30 +237,48 @@ AllDecodeFields DecodeInst(unsigned int IR){
 			df.rd		= (IR & rdmask)		>> 7;
 			df.funct3	= (IR & funct3mask)	>> 12;
 			df.rs1		= (IR & rs1mask)	>> 15;
-			df.imm		= (IR & imm12Imask)	>> 20;
+			df.imm = 0;
+			df.imm		= ((IR & 0x80000000) ? 0xfffff000 : 0x00000000)	| ((IR & imm12Imask)	>> 20);
 			break;
-		case 0x67:
+		case opji:
 			df.opcode	= opcode;
 			df.rd		= (IR & rdmask)		>> 7;
 			df.funct3	= (IR & funct3mask)	>> 12;
 			df.rs1		= (IR & rs1mask)	>> 15;
-			df.imm		= (IR & imm12Imask)	>> 20;
+			df.imm = 0;
+			df.imm		= ((IR & 0x80000000) ? 0xfffff000 : 0x00000000)	| ((IR & imm12Imask)	>> 20);
 			break;
-		case opstore:// make thus for Stype
+		case opstore:
 			df.opcode	= opcode;
 			df.funct3	= (IR & funct3mask)	>> 12;
 			df.rs1		= (IR & rs1mask)	>> 15;
 			df.rs2		= (IR & rs2mask)	>> 20;
+			df.imm = 0;
 			df.imm		= ((IR & rdmask)	>> 7)|((IR & funct7mask)	>> 18);
 			break;
 		case opbranch:
-			printf("Branch decode\n");
 			df.opcode	= opcode;
 			df.funct3	= (IR & funct3mask)	>> 12;
 			df.rs1		= (IR & rs1mask)	>> 15;
 			df.rs2		= (IR & rs2mask)	>> 20;
 			df.imm = 0;
 			df.imm		= (((IR & 0x80000000)	>> 19) ? 0xfffff000 : 0x00000000)| ((IR & 0x7e000000)	>> 20)|((IR & 0x00000f00)	>> 7) | ((IR & 0x00000080)	<< 4);
+			break;
+		case opj:
+			df.opcode	= opcode;
+			df.rd		= (IR & rdmask)		>> 7;
+			df.imm = 0;
+			df.imm		= (((IR & 0x80000000)	>> 11) ? 0xfff00000 : 0x00000000)| (IR & 0x000ff000) | ((IR  & 0x00100000) & 9) | ((IR & 0x40000000) >> 20);
+			break;
+		case oplui:
+			df.opcode	= opcode;
+			df.rd		= (IR & rdmask)		>> 7;
+			df.imm		= (IR & 0xfffff000);
+			break;
+		case opauipc:
+			df.opcode	= opcode;
+			df.rd		= (IR & rdmask)		>> 7;
+			df.imm		= (IR & 0xfffff000);
 			break;
 		default:
 			printf("Entered default in decode\n");
@@ -265,17 +288,24 @@ AllDecodeFields DecodeInst(unsigned int IR){
 }
 
 unsigned int Execute(AllDecodeFields df, unsigned int *umem, unsigned int regs[32], unsigned int pc){
-printf("pc in Execute  : 0x%08x\n", pc);
+printf("\npc in Execute  : 0x%08x\n", pc);
 	switch(df.opcode)
 	{
 		case opralu:
 			switch(df.funct3)
 			{
 				case 0x0:
-					if(df.funct7)
-						regs[df.rd] = regs[df.rs1] - regs[df.rs2];
-					else //check fields in specification
-						regs[df.rd] = regs[df.rs1] + regs[df.rs2];
+					switch(df.funct7)
+					{
+						case 0x0:
+							regs[df.rd] = regs[df.rs1] + regs[df.rs2];
+							break;
+						case 0x20:
+							regs[df.rd] = regs[df.rs1] - regs[df.rs2];
+							break;
+						default:
+							break;
+					}
 					break;
 				case 0x4:
 					regs[df.rd] = regs[df.rs1] ^ regs[df.rs2];
@@ -290,16 +320,23 @@ printf("pc in Execute  : 0x%08x\n", pc);
 					regs[df.rd] = regs[df.rs1] << regs[df.rs2];
 					break;
 				case 0x5:
-					if(df.funct7)
-						regs[df.rd] = regs[df.rs1] >> regs[df.rs2];
-					else //check fields in specification
-						regs[df.rd] = regs[df.rs1] >> regs[df.rs2];  //////////////////////MSB EXTENDS
+					switch(df.funct7)
+					{
+						case 0x0:
+							regs[df.rd] = regs[df.rs1] >> regs[df.rs2];
+							break;
+						case 0x20:
+							regs[df.rd] = (signed int)regs[df.rs1] >> regs[df.rs2];
+							break;
+						default:
+							break;
+					}
 					break;
 				case 0x2:
-					regs[df.rd] = (regs[df.rs1] < regs[df.rs2]) ? 1:0;
+					regs[df.rd] = ((signed int)regs[df.rs1] < (signed int)regs[df.rs2]) ? 1 : 0;
 					break;
 				case 0x3:
-					regs[df.rd] = (regs[df.rs1] < regs[df.rs2]) ? 1:0; /////////////////////zero extends
+					regs[df.rd] = (regs[df.rs1] < regs[df.rs2]) ? 1 : 0;
 					break;
 
 				default:
@@ -311,32 +348,33 @@ printf("pc in Execute  : 0x%08x\n", pc);
 			switch(df.funct3)
 			{
 				case 0x0:
-					regs[df.rd] = regs[df.rs1] + regs[df.imm];
+					regs[df.rd] = regs[df.rs1] + df.imm;
 					break;
 				case 0x4:
-					regs[df.rd] = regs[df.rs1] ^ regs[df.imm];
+					regs[df.rd] = regs[df.rs1] ^ df.imm;
 					break;
 				case 0x6:
-					regs[df.rd] = regs[df.rs1] | regs[df.imm];
+					regs[df.rd] = regs[df.rs1] | df.imm;
 					break;
 				case 0x7:
-					regs[df.rd] = regs[df.rs1] & regs[df.imm];
+					regs[df.rd] = regs[df.rs1] & df.imm;
 					break;
 				case 0x1:
-					if (!(df.imm & 0xfe0)) //!
-						regs[df.rd] = regs[df.rs1] << regs[df.imm]&0x1f;////////////
+					if ((df.imm & 0x00000fe0) == 0)
+						regs[df.rd] = regs[df.rs1] << (df.imm & 0x0000001f);
 					break;
 				case 0x5:
-					if (!(df.imm & 0xfe0))
-						regs[df.rd] = regs[df.rs1] >> regs[df.imm]&0x1f;
-					else //check fields in specification
-						regs[df.rd] = regs[df.rs1] >> regs[df.imm]&0x1f;  //////////////////////MSB EXTENDS
+					if ((df.imm & 0x00000fe0) == 0)
+						regs[df.rd] = regs[df.rs1] >> (df.imm & 0x0000001f);
+					else if ((df.imm & 0x00000fe0) == 0x400)
+						regs[df.rd] = (regs[df.rs1] & 0x80000000) ? ((signed int)regs[df.rs1] >> (df.imm & 0x0000001f)) : (regs[df.rs1] >> (df.imm & 0x0000001f));
 					break;
 				case 0x2:
-					regs[df.rd] = (regs[df.rs1] < regs[df.imm]) ? 1:0;////////////
+					regs[df.rd] = ((signed int)regs[df.rs1] < (signed int)df.imm) ? 1:0;
 					break;
 				case 0x3:
-					regs[df.rd] = (regs[df.rs1] < regs[df.imm]) ? 1:0; /////////////////////zero extends
+					df.imm = df.imm & 0x00000fff;
+					regs[df.rd] = (regs[df.rs1] < df.imm) ? 1:0;
 					break;
 
 				default:
@@ -390,8 +428,7 @@ printf("pc in Execute  : 0x%08x\n", pc);
 			}
 			break;
 
-		case opbranch://B  YET TO DO
-			printf("Entered Branch execute funct3 = %d\n",df.funct3);
+		case opbranch:
 			switch(df.funct3)
 			{
 				case 0x0:
@@ -420,29 +457,34 @@ printf("pc in Execute  : 0x%08x\n", pc);
 					break;
 
 				default:
-					printf("funct3 default in branch execute");
 					break;
 			}
 			break;
-		case 0x67:// change below conditions based on it
+		case opj:
+			regs[df.rd] = pc + 4;
+			pc = pc + df.imm;
+			break;
+		case opji:
 			switch(df.funct3)
 			{
-				case 0x01: //shamt and shift
-				case 0x03:
-					break;
-				case 0x00:
-					break;
-				case 0x02:
-					break;
+				case 0x0:
+					regs[df.rd] = pc + 4;
+					pc = regs[df.rs1] + df.imm;
 				default:
 					break;
 			}
+			break;
+		case oplui:
+			regs[df.rd] = df.imm;
+			break;
+		case opauipc:
+			regs[df.rd] = pc +  df.imm;
 			break;
 		default:
 			printf("Entered default in Execute\n");
 			break;
 	}
-	printf("Returning from Execute\n");
+	//printf("Returning from Execute p = %x\n",pc);
 	return pc;
 }
 

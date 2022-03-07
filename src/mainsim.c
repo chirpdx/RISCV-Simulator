@@ -4,7 +4,7 @@
 
 #define opcodemask  0x0000007f
 #define rdmask      0x00000f80
-#define funct3mask  0x00003000
+#define funct3mask  0x00007000
 #define rs1mask     0x000f8000
 #define rs2mask     0x01f00000
 #define funct7mask  0xfe000f80

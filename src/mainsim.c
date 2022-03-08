@@ -175,16 +175,22 @@ void main(int argc,char *argv[] ){
 	while(!(inst_mem[pc/4] == 0x8067 && x[raindex]== 0))
 	{
 		x[zeroindex] = 0;
-		if(pc%4 != 0)
-			printf("Error PC is not 4 byte aligned\n");
+		if(pc%4 != 0){
+			printf("Error PC is not 4 byte aligned: pc = %u\n", pc);
+			exit(0);
+		}
+		if(pc > 65535){
+			printf("Error PC is out of memory bound: pc = %u\n", pc);
+			exit(0);
+		}
 		IR = inst_mem[pc/4];
+		printf("IR  : 0x%08x\n", IR);
 		decodedall = DecodeInst(IR);
 		pc = Execute(decodedall, inst_mem, x, pc);
 		x[zeroindex] = 0;
 		#ifdef __verbose__
 			printf("Verbose mode");
 		#endif
-		printf("IR  : 0x%08x\n", IR);
 		DisplayRegs(x, pc);
 		//printf("%x\n",decodedall.opcode);
 		if(decodedall.opcode == opralu || decodedall.opcode == opialu || decodedall.opcode == opload || decodedall.opcode == opstore || decodedall.opcode == oplui || decodedall.opcode == opauipc)
@@ -282,6 +288,7 @@ AllDecodeFields DecodeInst(unsigned int IR){
 			break;
 		default:
 			printf("Entered default in decode\n");
+			exit(0);
 			break;
 	}
 	return df;
@@ -289,6 +296,12 @@ AllDecodeFields DecodeInst(unsigned int IR){
 
 unsigned int Execute(AllDecodeFields df, unsigned int *umem, unsigned int regs[32], unsigned int pc){
 printf("\npc in Execute  : 0x%08x\n", pc);
+unsigned int tempadd = 0;
+unsigned int tempmask = 0xffffffff;
+unsigned int tempsignbit = 0x80000000;
+unsigned int tempread = 0;
+unsigned int tempstore = 0;
+
 	switch(df.opcode)
 	{
 		case opralu:
@@ -304,6 +317,8 @@ printf("\npc in Execute  : 0x%08x\n", pc);
 							regs[df.rd] = regs[df.rs1] - regs[df.rs2];
 							break;
 						default:
+							printf("Entered default in alu register instruction add sub funct7\n");
+							exit(0);
 							break;
 					}
 					break;
@@ -329,6 +344,8 @@ printf("\npc in Execute  : 0x%08x\n", pc);
 							regs[df.rd] = (signed int)regs[df.rs1] >> (regs[df.rs2] & 0x0000001f);
 							break;
 						default:
+							printf("Entered default in alu register instruction shift right funct7\n");
+							exit(0);
 							break;
 					}
 					break;
@@ -340,6 +357,8 @@ printf("\npc in Execute  : 0x%08x\n", pc);
 					break;
 
 				default:
+					printf("Entered default in alu register instruction funct3\n");
+					exit(0);
 					break;
 			}
 			break;
@@ -368,6 +387,9 @@ printf("\npc in Execute  : 0x%08x\n", pc);
 						regs[df.rd] = regs[df.rs1] >> (df.imm & 0x0000001f);
 					else if ((df.imm & 0x00000fe0) == 0x400)
 						regs[df.rd] = (regs[df.rs1] & 0x80000000) ? ((signed int)regs[df.rs1] >> (df.imm & 0x0000001f)) : (regs[df.rs1] >> (df.imm & 0x0000001f));
+					else
+						printf("Entered default in alu immediate instruction shift right funct7\n");
+						exit(0);
 					break;
 				case 0x2:
 					regs[df.rd] = ((signed int)regs[df.rs1] < (signed int)df.imm) ? 1:0;
@@ -378,52 +400,143 @@ printf("\npc in Execute  : 0x%08x\n", pc);
 					break;
 
 				default:
+					printf("Entered default in alu immediate instruction funct3\n");
+					exit(0);
 					break;
 			}
 			break;
 
 		case opload:
+			tempadd = regs[df.rs1]+df.imm;
+			tempread = ReadMem(umem,tempadd);
 			switch(df.funct3)
 			{
 				case 0x0:
-					regs[df.rd] = *(umem+(df.rs1+df.imm)/4) & 0x80 ? ((*(umem+(df.rs1+df.imm)/4))&0xff)|0xffff00 : (*(umem+(df.rs1+df.imm)/4))&0xff;
+					switch(tempadd%4)
+					{
+						case 0: tempmask = 0x000000ff;
+								tempsignbit = 0x00000080;
+								regs[df.rd] = (tempread & tempsignbit) ? ((tempread & tempmask) | 0xffffff00) : (tempread & tempmask);
+							break;
+						case 1: tempmask = 0x0000ff00;
+								tempsignbit = 0x00008000;
+								regs[df.rd] = (tempread & tempsignbit) ? (((tempread & tempmask) >> 8)| 0xffffff00) : ((tempread & tempmask) >> 8);
+							break;
+						case 2: tempmask = 0x00ff0000;
+								tempsignbit = 0x00800000;
+								regs[df.rd] = (tempread & tempsignbit) ? (((tempread & tempmask) >> 16)| 0xffffff00) : ((tempread & tempmask) >> 16);
+							break;
+						case 3: tempmask = 0xff000000;
+								tempsignbit = 0x80000000;
+								regs[df.rd] = (tempread & tempsignbit) ? (((tempread & tempmask) >> 24)| 0xffffff00) : ((tempread & tempmask) >> 24);
+							break;
+						default:
+							break;
+					}
 					break;
 				case 0x1:
-					regs[df.rd] = *(umem+(df.rs1+df.imm)) & 0x8000 ? ((*(umem+(df.rs1+df.imm)))&0xffff)|0xff0000 : (*(umem+(df.rs1+df.imm)))&0xffff;
+					switch(tempadd%4)
+					{
+						case 0: tempmask = 0x0000ffff;
+								tempsignbit = 0x00008000;
+								regs[df.rd] = (tempread & tempsignbit) ? ((tempread & tempmask) | 0xffff0000) : (tempread & tempmask);
+							break;
+						case 2: tempmask = 0xffff0000;
+								tempsignbit = 0x80000000;
+								regs[df.rd] = (tempread & tempsignbit) ? (((tempread & tempmask) >> 16)| 0xffff0000) : ((tempread & tempmask) >> 16);
+							break;
+						default:
+							break;
+					}
 					break;
 				case 0x2:
-					regs[df.rd] = (*(umem+(df.rs1+df.imm)))&0xffffff;
+					regs[df.rd] = tempread;
 					break;
 				case 0x4:
-					regs[df.rd] = (*(umem+(df.rs1+df.imm)))&0xff;  /////////////////////zero extends
+					switch(tempadd%4)
+					{
+						case 0: tempmask = 0x000000ff;
+								regs[df.rd] = (tempread & tempmask);
+							break;
+						case 1: tempmask = 0x0000ff00;
+								regs[df.rd] = ((tempread & tempmask) >> 8);
+							break;
+						case 2: tempmask = 0x00ff0000;
+								regs[df.rd] = ((tempread & tempmask) >> 16);
+							break;
+						case 3: tempmask = 0xff000000;
+								regs[df.rd] = ((tempread & tempmask) >> 24);
+							break;
+						default:
+							break;
+					}
 					break;
 				case 0x5:
-					regs[df.rd] = (*(umem+(df.rs1+df.imm)))&0xffff; /////////////////////zero extends
+					switch(tempadd%4)
+					{
+						case 0: tempmask = 0x0000ffff;
+								regs[df.rd] = (tempread & tempmask);
+							break;
+						case 2: tempmask = 0xffff0000;
+								regs[df.rd] = ((tempread & tempmask) >> 16);
+							break;
+						default:
+							break;
+					}
 					break;
 				default:
+					printf("Entered default in load instruction funct3\n");
+					exit(0);
 					break;
 			}
 			break;
 
 		case opstore:
+			tempstore = 0;
+			tempadd = 0;
+			tempadd = regs[df.rs1]+df.imm;
 			switch(df.funct3)
 			{
 				case 0x0:
-					WriteMem(umem,df.rs1+df.imm,regs[df.rs2] & 0x000000ff);
+					switch(tempadd%4)
+					{
+						case 0: tempstore = (regs[df.rs2] & 0x000000ff);
+							break;
+						case 1: tempstore = (regs[df.rs2] & 0x000000ff) << 8;
+							break;
+						case 2: tempstore = (regs[df.rs2] & 0x000000ff) << 16;
+							break;
+						case 3: tempstore = (regs[df.rs2] & 0x000000ff) << 24;
+							break;
+						default:
+							break;
+					}
+					WriteMem(umem,tempadd,tempstore);
 					//WriteMem(umem,df.rs1+df.imm,(*(umem+(df.rs1+df.imm)/4)&ffff00)|(regs[df.rs2] & 0xff))
 					//*(umem+(df.rs1+df.imm)/4) & 0x80 ? ((*(umem+(df.rs1+df.imm)/4))&0xff)|0xffff00 : (*(umem+(df.rs1+df.imm)/4))&0xff = regs[df.rs2] & 0xff;
 					break;
 				case 0x1:
-					WriteMem(umem,df.rs1+df.imm,regs[df.rs2] & 0x0000ffff);
+					switch(tempadd%4)
+					{
+						case 0: tempstore = (regs[df.rs2] & 0x0000ffff);
+							break;
+						case 2: tempstore = (regs[df.rs2] & 0x0000ffff) << 16;
+							break;
+						default:
+							break;
+					}
+					WriteMem(umem,tempadd,tempstore);
 					//WriteMem(umem,df.rs1+df.imm,(*(umem+(df.rs1+df.imm)/4)&ff0000)|(regs[df.rs2] & 0xffff))
 					//*(umem+(df.rs1+df.imm)) & 0x8000 ? ((*(umem+(df.rs1+df.imm)))&0xffff)|0xff0000 : (*(umem+(df.rs1+df.imm)))&0xffff = regs[df.rs2] & 0xffff;
 					break;
 				case 0x2:
-					WriteMem(umem,df.rs1+df.imm,regs[df.rs2] & 0xffffffff);
+					WriteMem(umem,tempadd,regs[df.rs2]);
 					//(*(umem+(df.rs1+df.imm)))&0xffffff = regs[df.rs2] & 0xffffff;
 					break;
 
 				default:
+					printf("Entered default in store instruction funct3\n");
+					exit(0);
 					break;
 			}
 			break;
@@ -457,6 +570,8 @@ printf("\npc in Execute  : 0x%08x\n", pc);
 					break;
 
 				default:
+					printf("Entered default in branch instruction funct3\n");
+					exit(0);
 					break;
 			}
 			break;
@@ -471,6 +586,8 @@ printf("\npc in Execute  : 0x%08x\n", pc);
 					regs[df.rd] = pc + 4;
 					pc = regs[df.rs1] + df.imm;
 				default:
+					printf("Entered default in jump instruction funct3\n");
+					exit(0);
 					break;
 			}
 			break;
@@ -482,6 +599,7 @@ printf("\npc in Execute  : 0x%08x\n", pc);
 			break;
 		default:
 			printf("Entered default in Execute\n");
+			exit(0);
 			break;
 	}
 	//printf("Returning from Execute p = %x\n",pc);

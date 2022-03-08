@@ -545,27 +545,27 @@ unsigned int tempstore = 0;
 			switch(df.funct3)
 			{
 				case 0x0:
-					if ((signed int)df.rs1 == (signed int)df.rs2)
+					if ((signed int)regs[df.rs1] == (signed int)regs[df.rs2])
 						pc = pc + df.imm;
 					break;
 				case 0x1:
-					if ((signed int)df.rs1 != (signed int)df.rs2)
+					if ((signed int)regs[df.rs1] != (signed int)regs[df.rs2])
 						pc = pc + df.imm;
 					break;
 				case 0x4:
-					if ((signed int)df.rs1 < (signed int)df.rs2)
+					if ((signed int)regs[df.rs1] < (signed int)regs[df.rs2])
 						pc = pc + df.imm;
 					break;
 				case 0x5:
-					if ((signed int)df.rs1 >= (signed int)df.rs2)
+					if ((signed int)regs[df.rs1] >= (signed int)regs[df.rs2])
 						pc = pc + df.imm;
 					break;
 				case 0x6:
-					if (df.rs1 < df.rs2)
+					if (regs[df.rs1] < regs[df.rs2])
 						pc = pc + df.imm;
 					break;
 				case 0x7:
-					if (df.rs1 >= df.rs2)
+					if (regs[df.rs1] >= regs[df.rs2])
 						pc = pc + df.imm;
 					break;
 

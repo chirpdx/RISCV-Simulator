@@ -157,12 +157,11 @@ void main(int argc,char *argv[] ){
 	FILE *fp = fopen(source,"r");
 	printf("PC Value(represented in hex):%x\n", pc);
 	printf("Stack pointer Value(represented in decimal):%u\n",sp );
-	printf("Number of arguments(represented in decimal):%d\n",(argc-1)); //not needed
+	//printf("Number of arguments(represented in decimal):%d\n",(argc-1)); //not needed
 
 	while ( fgets(buffer,32,fp) != NULL){
 		token  = strtok(buffer,":");
 		address = (int)strtol(token, NULL, 16);
-		
 		token = strtok(NULL," ");
 		inst = strtoul(token, NULL, 16);
 		inst_mem[address/4] = inst;
@@ -188,6 +187,7 @@ void main(int argc,char *argv[] ){
 		printf("IR  : 0x%08x\n", IR);
 		DisplayRegs(x, pc);
 		//printf("%x\n",decodedall.opcode);
+		printf("________________________________________________________________________________________________________________________________________________________\n");
 	}
 	while(!(IR == 0x8067 && x[raindex]== 0));
 	printf("\n\nAfter Final Instruction \n\n");
@@ -223,6 +223,7 @@ AllDecodeFields DecodeInst(unsigned int IR){
 			df.rs2		= (IR & rs2mask)	>> 20;
 			df.funct7	= (IR & funct7mask)	>> 25;
 			df.imm = 0;
+			printf("Decoded ALU code\n");
 			break;
 		case opload:
 			df.opcode	= opcode;
@@ -231,6 +232,7 @@ AllDecodeFields DecodeInst(unsigned int IR){
 			df.rs1		= (IR & rs1mask)	>> 15;
 			df.imm = 0;
 			df.imm		= ((IR & 0x80000000) ? 0xfffff000 : 0x00000000) | ((IR & imm12Imask)	>> 20);
+			printf("Decoded LOAD code\n");
 			break;
 		case opialu:
 			df.opcode	= opcode;
@@ -239,6 +241,7 @@ AllDecodeFields DecodeInst(unsigned int IR){
 			df.rs1		= (IR & rs1mask)	>> 15;
 			df.imm = 0;
 			df.imm		= ((IR & 0x80000000) ? 0xfffff000 : 0x00000000)	| ((IR & imm12Imask)	>> 20);
+			printf("Decoded Immediate ALU code\n");
 			break;
 		case opji:
 			df.opcode	= opcode;
@@ -247,6 +250,7 @@ AllDecodeFields DecodeInst(unsigned int IR){
 			df.rs1		= (IR & rs1mask)	>> 15;
 			df.imm = 0;
 			df.imm		= ((IR & 0x80000000) ? 0xfffff000 : 0x00000000)	| ((IR & imm12Imask)	>> 20);
+			printf("Decoded JUMP I code\n");
 			break;
 		case opstore:
 			df.opcode	= opcode;
@@ -255,6 +259,7 @@ AllDecodeFields DecodeInst(unsigned int IR){
 			df.rs2		= (IR & rs2mask)	>> 20;
 			df.imm = 0;
 			df.imm		= ((IR & 0x80000000)	? 0xfffff000 : 0x00000000)|((IR & rdmask)	>> 7)|((IR & funct7mask)	>> 20);
+			printf("Decoded LOAD code\n");
 			break;
 		case opbranch:
 			df.opcode	= opcode;
@@ -263,22 +268,26 @@ AllDecodeFields DecodeInst(unsigned int IR){
 			df.rs2		= (IR & rs2mask)	>> 20;
 			df.imm = 0;
 			df.imm		= (((IR & 0x80000000)	>> 19) ? 0xfffff000 : 0x00000000)| ((IR & 0x7e000000)	>> 20)|((IR & 0x00000f00)	>> 7) | ((IR & 0x00000080)	<< 4);
+			printf("Decoded BRANCH code\n");
 			break;
 		case opj:
 			df.opcode	= opcode;
 			df.rd		= (IR & rdmask)		>> 7;
 			df.imm = 0;
 			df.imm		= (((IR & 0x80000000)	>> 11) ? 0xfff00000 : 0x00000000)| (IR & 0x000ff000) | ((IR  & 0x00100000) & 9) | ((IR & 0x40000000) >> 20);
+			printf("Decoded JUMP code\n");
 			break;
 		case oplui:
 			df.opcode	= opcode;
 			df.rd		= (IR & rdmask)		>> 7;
 			df.imm		= (IR & 0xfffff000);
+			printf("Decoded LUI code\n");
 			break;
 		case opauipc:
 			df.opcode	= opcode;
 			df.rd		= (IR & rdmask)		>> 7;
 			df.imm		= (IR & 0xfffff000);
+			printf("Decoded AUIPC code\n");
 			break;
 		default:
 			printf("Entered default in decode\n");
@@ -288,55 +297,66 @@ AllDecodeFields DecodeInst(unsigned int IR){
 }
 
 unsigned int Execute(AllDecodeFields df, unsigned int *umem, unsigned int regs[32], unsigned int pc){
-printf("\npc in Execute  : 0x%08x\n", pc);
+printf("pc in Execute  : 0x%08x\n", pc);
 	switch(df.opcode)
 	{
 		case opralu:
+			//printf("funct3:%x\n",df.funct3);
 			switch(df.funct3)
 			{
 				case 0x0:
 					switch(df.funct7)
 					{
-						case 0x0:
+						case 0x0://ADD
 							regs[df.rd] = regs[df.rs1] + regs[df.rs2];
+							printf(" ADD rs1 =x[%u] rs2 = x[%u] rsd =x[%u] :  %x + %x = %x\n",df.rs1,df.rs2,df.rd,regs[df.rs1],regs[df.rs2],regs[df.rd]);
 							break;
-						case 0x20:
+						case 0x20://SUB
 							regs[df.rd] = regs[df.rs1] - regs[df.rs2];
+							printf(" SUB rs1 =x[%u] rs2 = x[%u] rsd =x[%u] :  %x - %x = %x\n",df.rs1,df.rs2,df.rd,regs[df.rs1],regs[df.rs2],regs[df.rd]);
 							break;
 						default:
 							break;
 					}
 					break;
-				case 0x4:
+				case 0x4: //XOR
 					regs[df.rd] = regs[df.rs1] ^ regs[df.rs2];
+					printf(" XOR rs1 =x[%u] rs2 = x[%u] rsd =x[%u] :  %x ^ %x = %x\n",df.rs1,df.rs2,df.rd,regs[df.rs1],regs[df.rs2],regs[df.rd]);
 					break;
-				case 0x6:
+				case 0x6: //OR
 					regs[df.rd] = regs[df.rs1] | regs[df.rs2];
+					printf(" OR rs1 =x[%u] rs2 = x[%u] rsd =x[%u] :  %x | %x = %x\n",df.rs1,df.rs2,df.rd,regs[df.rs1],regs[df.rs2],regs[df.rd]);
 					break;
-				case 0x7:
+				case 0x7: // AND
 					regs[df.rd] = regs[df.rs1] & regs[df.rs2];
+					printf(" AND rs1 =x[%u] rs2 = x[%u] rsd =x[%u] :  %x & %x = %x\n",df.rs1,df.rs2,df.rd,regs[df.rs1],regs[df.rs2],regs[df.rd]);
 					break;
-				case 0x1:
-					regs[df.rd] = regs[df.rs1] << regs[df.rs2];
+				case 0x1: //SLL
+					regs[df.rd] = regs[df.rs1] << (regs[df.rs2] & 0x0000001f);
+					printf(" SLL rs1 =x[%u] rs2 = x[%u] rsd =x[%u] :  %x << %x = %x\n",df.rs1,df.rs2,df.rd,regs[df.rs1],regs[df.rs2],regs[df.rd]);
 					break;
 				case 0x5:
 					switch(df.funct7)
 					{
-						case 0x0:
-							regs[df.rd] = regs[df.rs1] >> regs[df.rs2];
+						case 0x0: //SRL
+							regs[df.rd] = regs[df.rs1] >> (regs[df.rs2] & 0x0000001f);
+							printf(" SRL rs1 =x[%u] rs2 = x[%u] rsd =x[%u] :  %x >> %x = %x\n",df.rs1,df.rs2,df.rd,regs[df.rs1],regs[df.rs2],regs[df.rd]);
 							break;
-						case 0x20:
-							regs[df.rd] = (signed int)regs[df.rs1] >> regs[df.rs2];
+						case 0x20://SRA
+							regs[df.rd] = (signed int)regs[df.rs1] >> (regs[df.rs2] & 0x0000001f);
+							printf(" SRA rs1 =x[%u] rs2 = x[%u] rsd =x[%u] :  %x >>> %x = %x\n",df.rs1,df.rs2,df.rd,regs[df.rs1],regs[df.rs2],regs[df.rd]);
 							break;
 						default:
 							break;
 					}
 					break;
-				case 0x2:
+				case 0x2: // SLT
 					regs[df.rd] = ((signed int)regs[df.rs1] < (signed int)regs[df.rs2]) ? 1 : 0;
+					printf(" SLT rs1 =x[%u] rs2 = x[%u] rsd =x[%u] :  %x < %x = %x\n",df.rs1,df.rs2,df.rd,regs[df.rs1],regs[df.rs2],regs[df.rd]);
 					break;
-				case 0x3:
+				case 0x3: //SLTU
 					regs[df.rd] = (regs[df.rs1] < regs[df.rs2]) ? 1 : 0;
+					printf(" SLTU(unsigned) rs1 =x[%u] rs2 = x[%u] rsd =x[%u] :  %x < %x = %x\n",df.rs1,df.rs2,df.rd,regs[df.rs1],regs[df.rs2],regs[df.rd]);
 					break;
 
 				default:
@@ -347,34 +367,45 @@ printf("\npc in Execute  : 0x%08x\n", pc);
 		case opialu:
 			switch(df.funct3)
 			{
-				case 0x0:
+				case 0x0://ADDI
 					regs[df.rd] = regs[df.rs1] + df.imm;
+					printf(" ADDI rs1 =x[%u]  rsd =x[%u] :  %x + %x = %x\n",df.rs1,df.rd,regs[df.rs1],df.imm,regs[df.rd]);
 					break;
-				case 0x4:
+				case 0x4://XORI
 					regs[df.rd] = regs[df.rs1] ^ df.imm;
+					printf(" XORI rs1 =x[%u]  rsd =x[%u] :  %x ^ %x = %x\n",df.rs1,df.rd,regs[df.rs1],df.imm,regs[df.rd]);
 					break;
-				case 0x6:
+				case 0x6://ORI
 					regs[df.rd] = regs[df.rs1] | df.imm;
+					printf(" ORI rs1 =x[%u]  rsd =x[%u] :  %x | %x = %x\n",df.rs1,df.rd,regs[df.rs1],df.imm,regs[df.rd]);
 					break;
-				case 0x7:
+				case 0x7://ANDI
 					regs[df.rd] = regs[df.rs1] & df.imm;
+					printf(" AND rs1 =x[%u]  rsd =x[%u] :  %x & %x = %x\n",df.rs1,df.rd,regs[df.rs1],df.imm,regs[df.rd]);
 					break;
-				case 0x1:
+				case 0x1://SLLI
 					if ((df.imm & 0x00000fe0) == 0)
 						regs[df.rd] = regs[df.rs1] << (df.imm & 0x0000001f);
+						printf(" SLLI rs1 =x[%u]  rsd =x[%u] :  %x << %x = %x\n",df.rs1,df.rd,regs[df.rs1],df.imm,regs[df.rd]);
 					break;
 				case 0x5:
-					if ((df.imm & 0x00000fe0) == 0)
+					if ((df.imm & 0x00000fe0) == 0){ //SRLI
 						regs[df.rd] = regs[df.rs1] >> (df.imm & 0x0000001f);
-					else if ((df.imm & 0x00000fe0) == 0x400)
+						printf(" SRLI rs1 =x[%u]  rsd =x[%u] :  %x >> %x = %x\n",df.rs1,df.rd,regs[df.rs1],df.imm,regs[df.rd]);
+						}
+					else if ((df.imm & 0x00000fe0) == 0x400){//SRAI
 						regs[df.rd] = (regs[df.rs1] & 0x80000000) ? ((signed int)regs[df.rs1] >> (df.imm & 0x0000001f)) : (regs[df.rs1] >> (df.imm & 0x0000001f));
+						printf(" SRLI rs1 =x[%u]  rsd =x[%u] :  %x >>> %x = %x\n",df.rs1,df.rd,regs[df.rs1],df.imm,regs[df.rd]);
+						}
 					break;
-				case 0x2:
+				case 0x2://SLTI
 					regs[df.rd] = ((signed int)regs[df.rs1] < (signed int)df.imm) ? 1:0;
+					printf(" SLTI rs1 =x[%u]  rsd =x[%u] :  %x < %x = %x\n",df.rs1,df.rd,regs[df.rs1],df.imm,regs[df.rd]);
 					break;
-				case 0x3:
+				case 0x3://SLTIU
 					df.imm = df.imm & 0x00000fff;
 					regs[df.rd] = (regs[df.rs1] < df.imm) ? 1:0;
+					printf(" AND rs1 =x[%u]  rsd =x[%u] :  %x < %x = %x\n",df.rs1,df.rd,regs[df.rs1],df.imm,regs[df.rd]);
 					break;
 
 				default:

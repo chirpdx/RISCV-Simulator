@@ -446,11 +446,15 @@ unsigned int tempstore = 0;
 								regs[df.rd] = (tempread & tempsignbit) ? (((tempread & tempmask) >> 16)| 0xffff0000) : ((tempread & tempmask) >> 16);
 							break;
 						default:
+							printf("Error : Non aligned address for 2 byte data loading\n");
 							break;
 					}
 					break;
 				case 0x2:
-					regs[df.rd] = tempread;
+					if(tempadd%4 == 0)
+						regs[df.rd] = tempread;
+					else
+						printf("Error : Non aligned address for 4 byte data loading\n");
 					break;
 				case 0x4:
 					switch(tempadd%4)
@@ -481,6 +485,7 @@ unsigned int tempstore = 0;
 								regs[df.rd] = ((tempread & tempmask) >> 16);
 							break;
 						default:
+							printf("Error : Non aligned address for 2 byte data loading\n");
 							break;
 					}
 					break;
@@ -523,6 +528,7 @@ unsigned int tempstore = 0;
 						case 2: tempstore = (regs[df.rs2] & 0x0000ffff) << 16;
 							break;
 						default:
+							printf("Error : Non aligned address for 2 byte data storing\n");
 							break;
 					}
 					WriteMem(umem,tempadd,tempstore);
@@ -530,7 +536,10 @@ unsigned int tempstore = 0;
 					//*(umem+(df.rs1+df.imm)) & 0x8000 ? ((*(umem+(df.rs1+df.imm)))&0xffff)|0xff0000 : (*(umem+(df.rs1+df.imm)))&0xffff = regs[df.rs2] & 0xffff;
 					break;
 				case 0x2:
-					WriteMem(umem,tempadd,regs[df.rs2]);
+					if(tempadd%4 == 0)
+						WriteMem(umem,tempadd,regs[df.rs2]);
+					else
+						printf("Error : Non aligned address for 4 byte data storing\n");
 					//(*(umem+(df.rs1+df.imm)))&0xffffff = regs[df.rs2] & 0xffffff;
 					break;
 

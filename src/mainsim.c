@@ -169,16 +169,15 @@ void main(int argc,char *argv[] ){
 	}
 	fclose(fp);
 	unsigned int IR = 0;
-
-	x[zeroindex] = 0;
 	x[spindex] = sp;
 	x[raindex] = 0;
 	AllDecodeFields decodedall;
-	do
+	while(!(inst_mem[pc/4] == 0x8067 && x[raindex]== 0))
 	{
 		x[zeroindex] = 0;
+		if(pc%4 != 0)
+			printf("Error PC is not 4 byte aligned\n");
 		IR = inst_mem[pc/4];
-		pc = pc + 4;
 		decodedall = DecodeInst(IR);
 		pc = Execute(decodedall, inst_mem, x, pc);
 		x[zeroindex] = 0;
@@ -188,8 +187,9 @@ void main(int argc,char *argv[] ){
 		printf("IR  : 0x%08x\n", IR);
 		DisplayRegs(x, pc);
 		//printf("%x\n",decodedall.opcode);
+		if(decodedall.opcode == opralu || decodedall.opcode == opialu || decodedall.opcode == opload || decodedall.opcode == opstore || decodedall.opcode == oplui || decodedall.opcode == opauipc)
+			pc = pc + 4;
 	}
-	while(!(IR == 0x8067 && x[raindex]== 0));
 	printf("\n\nAfter Final Instruction \n\n");
 	DisplayRegs(x, pc);
 }
@@ -317,16 +317,16 @@ printf("\npc in Execute  : 0x%08x\n", pc);
 					regs[df.rd] = regs[df.rs1] & regs[df.rs2];
 					break;
 				case 0x1:
-					regs[df.rd] = regs[df.rs1] << regs[df.rs2];
+					regs[df.rd] = regs[df.rs1] << (regs[df.rs2] & 0x0000001f);
 					break;
 				case 0x5:
 					switch(df.funct7)
 					{
 						case 0x0:
-							regs[df.rd] = regs[df.rs1] >> regs[df.rs2];
+							regs[df.rd] = regs[df.rs1] >> (regs[df.rs2] & 0x0000001f);
 							break;
 						case 0x20:
-							regs[df.rd] = (signed int)regs[df.rs1] >> regs[df.rs2];
+							regs[df.rd] = (signed int)regs[df.rs1] >> (regs[df.rs2] & 0x0000001f);
 							break;
 						default:
 							break;

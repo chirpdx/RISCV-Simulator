@@ -406,8 +406,10 @@ unsigned int tempstore = 0;
 					else if ((df.imm & 0x00000fe0) == 0x400)
 						regs[df.rd] = (regs[df.rs1] & 0x80000000) ? ((signed int)regs[df.rs1] >> (df.imm & 0x0000001f)) : (regs[df.rs1] >> (df.imm & 0x0000001f));
 					else
+					{
 						printf("Entered default in alu immediate instruction shift right funct7\n");
 						exit(0);
+					}
 					break;
 				case 0x2:
 					regs[df.rd] = ((signed int)regs[df.rs1] < (signed int)df.imm) ? 1:0;

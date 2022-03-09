@@ -68,7 +68,7 @@ void main(int argc,char *argv[] ){
 	#ifdef __verbose__
 		printf("Verbose mode triggered");
 	#endif
-	if (argc == 7){
+	if (argc >= 7){
 		printf("Only 3 arguments is passed\n");
 		if ( (strcmp(argv[1],"-mem") == 0) && (strcmp(argv[3],"-pc") == 0) && (strcmp(argv[5],"-sp") == 0)){
 			strcat(source, argv[2]);
@@ -159,6 +159,17 @@ void main(int argc,char *argv[] ){
 	printf("Stack pointer Value(represented in decimal):%u\n",sp );
 	printf("Number of arguments(represented in decimal):%d\n",(argc-1)); //not needed
 
+	//unsigned int breakpoint[2] = {-1,-1};
+	//printf("argc argv[8] = %d %x\n",argc, (int)strtol(argv[8], NULL, 16));
+
+	/*if(argc == 10)
+	{
+		breakpoint[0] = (int)strtol(argv[8], NULL, 16);
+		breakpoint[1] = (int)strtol(argv[9], NULL, 16);
+		printf("inside 0 = %x\n", breakpoint[0]);
+	}*/
+	//printf("breakpoint 0 = %x %x\n", breakpoint[0], breakpoint[1]);
+
 	while ( fgets(buffer,32,fp) != NULL){
 		token  = strtok(buffer,":");
 		address = (int)strtol(token, NULL, 16);
@@ -172,6 +183,9 @@ void main(int argc,char *argv[] ){
 	x[spindex] = sp;
 	x[raindex] = 0;
 	AllDecodeFields decodedall;
+	#ifdef __singlestep__
+		getchar();
+	#endif
 	while(!(inst_mem[pc/4] == 0x8067 && x[raindex]== 0))
 	{
 		x[zeroindex] = 0;
@@ -195,6 +209,10 @@ void main(int argc,char *argv[] ){
 		//printf("%x\n",decodedall.opcode);
 		if(decodedall.opcode == opralu || decodedall.opcode == opialu || decodedall.opcode == opload || decodedall.opcode == opstore || decodedall.opcode == oplui || decodedall.opcode == opauipc)
 			pc = pc + 4;
+		//printf("pc bp = %d %d\n",pc, breakpoint[0]);
+		#ifdef __singlestep__
+			getchar();
+		#endif
 	}
 	printf("\n\nAfter Final Instruction \n\n");
 	DisplayRegs(x, pc);

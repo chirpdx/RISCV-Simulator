@@ -320,10 +320,158 @@ unsigned int tempmask = 0xffffffff;
 unsigned int tempsignbit = 0x80000000;
 unsigned int tempread = 0;
 unsigned int tempstore = 0;
+unsigned int signa = 0;
+unsigned int signb = 0;
+unsigned long long int tempmulresult = 0;
+unsigned int a = 0;
+unsigned int b = 0;
+unsigned int bzero = 0;
+unsigned int tempdivresult = 0;
 
 	switch(df.opcode)
 	{
 		case opralu:
+			if(df.funct7 == 1)
+			{
+				signa = (regs[df.rs1] & 0x80000000) ? 1 : 0;
+				signb = (regs[df.rs2] & 0x80000000) ? 1 : 0;
+				bzero = (regs[df.rs2] == 0) ? 1 : 0;
+				switch(df.funct3)
+				{
+					case 0x0://MUL
+						regs[df.rd] = regs[df.rs1] * regs[df.rs2];
+						break;
+					case 0x1://MULH
+						a = regs[df.rs1];
+						b = regs[df.rs2];
+						if(signa == 1)
+						{
+							a = ~a;
+							a = a + 1;
+						}
+						if(signb == 1)
+						{
+							b = ~b;
+							b = b + 1;
+						}
+						tempmulresult = (unsigned long long int)a * (unsigned long long int)b;
+						if((signa+signb)%2 == 1)
+						{
+							tempmulresult = ~tempmulresult;
+							tempmulresult = tempmulresult + 1;
+						}
+						regs[df.rd] = tempmulresult >> 32;
+						break;
+					case 0x2://MULHSU
+						a = regs[df.rs1];
+						b = regs[df.rs2];
+						if(signa == 1)
+						{
+							a = ~a;
+							a = a + 1;
+						}
+						tempmulresult = (unsigned long long int)a * (unsigned long long int)b;
+						if(signa == 1)
+						{
+							tempmulresult = ~tempmulresult;
+							tempmulresult = tempmulresult + 1;
+						}
+						regs[df.rd] = tempmulresult >> 32;
+						break;
+					case 0x3://MULHU
+						tempmulresult = (unsigned long long int)regs[df.rs1] * (unsigned long long int)regs[df.rs2];
+						regs[df.rd] = tempmulresult >> 32;
+						break;
+					case 0x4://DIV
+						a = regs[df.rs1];
+						b = regs[df.rs2];
+						if(signa == 1)
+						{
+							a = ~a;
+							a = a + 1;
+						}
+						if(signb == 1)
+						{
+							b = ~b;
+							b = b + 1;
+						}
+						if(bzero == 1)
+						{
+							tempdivresult = 0xffffffff;
+						}
+						else if((regs[df.rs1] == 0x80000000) && (regs[df.rs2] == 0xffffffff))
+						{
+							tempdivresult = 0x80000000;
+						}
+						else
+						{
+							tempdivresult = a/b;
+							if((signa+signb)%2 == 1)
+							{
+								tempdivresult = ~tempdivresult;
+								tempdivresult = tempdivresult + 1;
+							}
+						}
+						regs[df.rd] = tempdivresult;
+						break;
+					case 0x5://DIVU
+						if(bzero == 1)
+						{
+							tempdivresult = 0xffffffff;
+						}
+						else
+						{
+							tempdivresult = regs[df.rs1]/regs[df.rs2];
+						}
+						regs[df.rd] = tempdivresult;
+						break;
+					case 0x6://REM
+						a = regs[df.rs1];
+						b = regs[df.rs2];
+						if(signa == 1)
+						{
+							a = ~a;
+							a = a + 1;
+						}
+						if(signb == 1)
+						{
+							b = ~b;
+							b = b + 1;
+						}
+						if(bzero == 1)
+						{
+							tempdivresult = regs[df.rs1];
+						}
+						else if((regs[df.rs1] == 0x80000000) && (regs[df.rs2] == 0xffffffff))
+						{
+							tempdivresult = 0;
+						}
+						else
+						{
+							tempdivresult = a%b;
+							if(signa == 1)
+							{
+								tempdivresult = ~tempdivresult;
+								tempdivresult = tempdivresult + 1;
+							}
+						}
+						regs[df.rd] = tempdivresult;
+						break;
+					case 0x7://REMU
+					if(bzero == 1)
+						{
+							tempdivresult = regs[df.rs1];
+						}
+						else
+						{
+							tempdivresult = a%b;
+						}
+						regs[df.rd] = tempdivresult;
+						break;
+				}
+			}
+			else
+			{
 			switch(df.funct3)
 			{
 				case 0x0:
@@ -379,6 +527,7 @@ unsigned int tempstore = 0;
 					printf("Entered default in alu register instruction funct3\n");
 					exit(0);
 					break;
+				}
 			}
 			break;
 

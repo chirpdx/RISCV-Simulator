@@ -207,7 +207,7 @@ void main(int argc,char *argv[] ){
 		#endif
 		DisplayRegs(x, pc);
 		//printf("%x\n",decodedall.opcode);
-		if(decodedall.opcode == opralu || decodedall.opcode == opialu || decodedall.opcode == opload || decodedall.opcode == opstore || decodedall.opcode == oplui || decodedall.opcode == opauipc)
+		//if(decodedall.opcode == opralu || decodedall.opcode == opialu || decodedall.opcode == opload || decodedall.opcode == opstore || decodedall.opcode == oplui || decodedall.opcode == opauipc)
 			pc = pc + 4;
 		//printf("pc bp = %d %d\n",pc, breakpoint[0]);
 		#ifdef __singlestep__
@@ -292,7 +292,7 @@ AllDecodeFields DecodeInst(unsigned int IR){
 			df.opcode	= opcode;
 			df.rd		= (IR & rdmask)		>> 7;
 			df.imm = 0;
-			df.imm		= (((IR & 0x80000000)	>> 11) ? 0xfff00000 : 0x00000000)| (IR & 0x000ff000) | ((IR  & 0x00100000) & 9) | ((IR & 0x40000000) >> 20);
+			df.imm		= ((IR & 0x80000000) ? 0xfff00000 : 0x00000000)| (IR & 0x000ff000) | ((IR  & 0x00100000) >> 9) | ((IR & 0x7fe00000) >> 20);
 			break;
 		case oplui:
 			df.opcode	= opcode;
@@ -314,6 +314,7 @@ AllDecodeFields DecodeInst(unsigned int IR){
 
 unsigned int Execute(AllDecodeFields df, unsigned int *umem, unsigned int regs[32], unsigned int pc){
 printf("\npc in Execute  : 0x%08x\n", pc);
+printf("opcode = %x imm = %d\n",df.opcode, df.imm);
 unsigned int tempadd = 0;
 unsigned int tempmask = 0xffffffff;
 unsigned int tempsignbit = 0x80000000;
@@ -575,27 +576,27 @@ unsigned int tempstore = 0;
 			{
 				case 0x0:
 					if ((signed int)regs[df.rs1] == (signed int)regs[df.rs2])
-						pc = pc + df.imm;
+						pc = pc + df.imm - 4;
 					break;
 				case 0x1:
 					if ((signed int)regs[df.rs1] != (signed int)regs[df.rs2])
-						pc = pc + df.imm;
+						pc = pc + df.imm - 4;
 					break;
 				case 0x4:
 					if ((signed int)regs[df.rs1] < (signed int)regs[df.rs2])
-						pc = pc + df.imm;
+						pc = pc + df.imm - 4;
 					break;
 				case 0x5:
 					if ((signed int)regs[df.rs1] >= (signed int)regs[df.rs2])
-						pc = pc + df.imm;
+						pc = pc + df.imm - 4;
 					break;
 				case 0x6:
 					if (regs[df.rs1] < regs[df.rs2])
-						pc = pc + df.imm;
+						pc = pc + df.imm - 4;
 					break;
 				case 0x7:
 					if (regs[df.rs1] >= regs[df.rs2])
-						pc = pc + df.imm;
+						pc = pc + df.imm - 4;
 					break;
 
 				default:
@@ -606,14 +607,14 @@ unsigned int tempstore = 0;
 			break;
 		case opj:
 			regs[df.rd] = pc + 4;
-			pc = pc + df.imm;
+			pc = pc + df.imm - 4;
 			break;
 		case opji:
 			switch(df.funct3)
 			{
 				case 0x0:
 					regs[df.rd] = pc + 4;
-					pc = regs[df.rs1] + df.imm;
+					pc = regs[df.rs1] + df.imm - 4;
 					break;
 				default:
 					printf("Entered default in jump instruction funct3\n");

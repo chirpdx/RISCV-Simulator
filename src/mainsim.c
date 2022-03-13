@@ -612,6 +612,7 @@ unsigned int tempstore = 0;
 				case 0x0:
 					regs[df.rd] = pc + 4;
 					pc = regs[df.rs1] + df.imm;
+					break;
 				default:
 					printf("Entered default in jump instruction funct3\n");
 					exit(0);

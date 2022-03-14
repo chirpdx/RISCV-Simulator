@@ -6,7 +6,7 @@
 char regnames[32][5] = {"zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2", "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"};
 
 int main(int argc,char *argv[] ){
-	char source[] = "../";
+	char source[] = "../tests/all_alu.mem";
 	char buffer[32];
 	int address;
 	unsigned int inst;
@@ -20,92 +20,20 @@ int main(int argc,char *argv[] ){
 	#ifdef __verbose__
 		printf("Verbose mode triggered\n");
 	#endif
-	if (argc >= 7){
-		printf("Only 3 arguments is passed\n");
-		if ( (strcmp(argv[1],"-mem") == 0) && (strcmp(argv[3],"-pc") == 0) && (strcmp(argv[5],"-sp") == 0)){
-			strcat(source, argv[2]);
-			pc = (int)strtol(argv[4], NULL, 16);
-			sp = (int)strtol(argv[6], NULL, 10);
-			printf("File Name:%s\n",argv[2]);
-			}
-		else if ((strcmp(argv[1],"-mem") == 0) && (strcmp(argv[5],"-pc") == 0) && (strcmp(argv[3],"-sp") == 0)){
-			strcat(source, argv[2]);
-			pc = (int)strtol(argv[6], NULL, 16);
-			sp = (int)strtol(argv[4], NULL, 10);
-			printf("File Name:%s\n",argv[2]);
-			}
-		else if ((strcmp(argv[5],"-mem") == 0) && (strcmp(argv[1],"-pc") == 0) && (strcmp(argv[3],"-sp") == 0)){
-			strcat(source, argv[6]);
-			pc = (int)strtol(argv[2], NULL, 16);
-			sp = (int)strtol(argv[4], NULL, 10);
-			printf("File Name:%s\n",argv[6]);
-			}
-		else if ((strcmp(argv[5],"-mem") == 0) && (strcmp(argv[3],"-pc") == 0) && (strcmp(argv[1],"-sp") == 0)){
-			strcat(source, argv[6]);
-			pc = (int)strtol(argv[4], NULL, 16);
-			sp = (int)strtol(argv[2], NULL, 10);
-			printf("File Name:%s\n",argv[6]);
-			}
-		else if ((strcmp(argv[3],"-mem") == 0) && (strcmp(argv[5],"-pc") == 0) && (strcmp(argv[1],"-sp") == 0)){
-			strcat(source, argv[4]);
-			pc = (int)strtol(argv[6], NULL, 16);
-			sp = (int)strtol(argv[2], NULL, 10);
-			printf("File Name:%s\n",argv[4]);
-			}
-		else if ((strcmp(argv[3],"-mem") == 0) && (strcmp(argv[1],"-pc") == 0) && (strcmp(argv[5],"-sp") == 0)){
-			strcat(source, argv[4]);
-			pc = (int)strtol(argv[2], NULL, 16);
-			sp = (int)strtol(argv[6], NULL, 10);
-			printf("File Name:%s\n",argv[4]);
-		}
-	}
-	else if (argc == 5){
-		printf("Only two arguments is passed\n");
-		if ( (strcmp(argv[1],"-mem") == 0) && (strcmp(argv[3],"-pc") == 0)){
-			strcat(source, argv[2]);
-			pc = (int)strtol(argv[4], NULL, 16);
-			}
-		else if ((strcmp(argv[1],"-mem") == 0) && (strcmp(argv[3],"-sp") == 0)){
-			strcat(source, argv[2]);
-			sp = (int)strtol(argv[4], NULL, 10);
-			}
-		else if ((strcmp(argv[1],"-pc") == 0) && (strcmp(argv[3],"-sp") == 0)){
-			strcat(source,"tests/porg.mem");
-			pc = (int)strtol(argv[2], NULL, 16);
-			sp = (int)strtol(argv[4], NULL, 10);
-			}
-		else if ((strcmp(argv[1],"-pc") == 0) && (strcmp(argv[3],"-mem") == 0)){
-			strcat(source, argv[4]);
-			pc = (int)strtol(argv[2], NULL, 16);
-			}
-		else if ((strcmp(argv[1],"-sp") == 0) && (strcmp(argv[3],"-pc") == 0)){
-			strcat(source,"tests/porg.mem");
-			pc = (int)strtol(argv[4], NULL, 16);
-			sp = (int)strtol(argv[2], NULL, 10);
-			}
-		else if ((strcmp(argv[1],"-sp") == 0) && (strcmp(argv[3],"-mem") == 0)){
-			strcat(source, argv[2]);
-			sp = (int)strtol(argv[4], NULL, 10);
-			}
-	}
-	else if (argc == 3){
-		printf("Only one arguments is passed\n");
-		if ( (strcmp(argv[1],"-mem") == 0)){
-			strcat(source, argv[2]);
-			}
-		else if ((strcmp(argv[1],"-pc") == 0)){
-			pc = (int)strtol(argv[2], NULL, 16);
-			strcat(source,"tests/porg.mem");
-			}
-		else if ((strcmp(argv[1],"-sp") == 0)){
-			sp = (int)strtol(argv[2], NULL, 10);
-			strcat(source,"tests/porg.mem");
-			}
-	}
-	else {
+
+	if(argc < 3) {
 		printf("No conditions passed Using Default value\n");
-		strcat(source,"tests/porg.mem");
-	}
+		}
+	else {
+		for (int i = 1; i < argc; i+=2){
+			if  ((strcmp(argv[i],"-mem") == 0))
+				strcpy(source,argv[i+1]);
+			else if ((strcmp(argv[i],"-pc") == 0))
+				pc = (int) strtol(argv[i+1],NULL,16);
+			else if ((strcmp(argv[i],"-sp") == 0))
+				sp = (int) strtol(argv[i+1],NULL,16);
+			}
+		}
 	FILE *fp = fopen(source,"r");
 	printf("Initial PC Value(represented in hex):%x\n", pc);
 	printf("Initial Stack pointer Value(represented in decimal):%u\n",sp );

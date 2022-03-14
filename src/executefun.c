@@ -23,6 +23,9 @@ unsigned int tempdivresult = 0;
 	switch(df.opcode)
 	{
 		case opralu:
+			#ifdef __VerboseDebug__
+				printf("OP_ALU_R Opcode: 0x%02x funct3 = 0x%01x funct7 = 0x%02x   rs1 = x%2d rs2 = x%2d rd = x%2d\n",df.opcode,df.funct3,df.funct7,df.rs1,df.rs2,df.rd);
+			#endif
 			if(df.funct7 == 1)
 			{
 				signa = (regs[df.rs1] & 0x80000000) ? 1 : 0;
@@ -228,6 +231,9 @@ unsigned int tempdivresult = 0;
 			break;
 
 		case opialu:
+			#ifdef __VerboseDebug__
+				printf("OP_ALU_I Opcode: 0x%02x funct3 = 0x%01x imm(hex) = 0x%08x imm(decimal) = %d  rs1 = x%2d  rd = x%2d\n",df.opcode,df.funct3,df.imm,df.imm,df.rs1,df.rd);
+			#endif
 			switch(df.funct3)
 			{
 				case 0x0:
@@ -273,6 +279,9 @@ unsigned int tempdivresult = 0;
 			break;
 
 		case opload:
+			#ifdef __VerboseDebug__
+				printf("OP_LOADS Opcode: 0x%02x funct3 = 0x%01x imm(hex) = 0x%x imm(decimal) = %d  rs1 = x%2d  rd = x%2d\n",df.opcode,df.funct3,df.imm,df.imm,df.rs1,df.rd);
+			#endif
 			tempadd = regs[df.rs1]+df.imm;
 			tempread = ReadMem(umem,tempadd);
 			switch(df.funct3)
@@ -363,6 +372,9 @@ unsigned int tempdivresult = 0;
 			break;
 
 		case opstore:
+			#ifdef __VerboseDebug__
+				printf("OP_STORESS Opcode: 0x%02x funct3 = 0x%01x imm(hex) = 0x%x imm(decimal) = %d  rs1 = x%2d rs2 = x%2d\n",df.opcode,df.funct3,df.imm,df.imm,df.rs1,df.rs2);
+			#endif
 			tempstore = 0;
 			tempadd = 0;
 			tempadd = regs[df.rs1]+df.imm;
@@ -417,6 +429,9 @@ unsigned int tempdivresult = 0;
 			break;
 
 		case opbranch:
+			#ifdef __VerboseDebug__
+				printf("OP_BRANCHS Opcode: 0x%02x funct3 = 0x%01x imm(hex) = 0x%x imm(decimal) = %d  rs1 = x%2d  rs2 = x%2d \n",df.opcode,df.funct3,df.imm,df.imm,df.rs1,df.rs2);
+			#endif
 			switch(df.funct3)
 			{
 				case 0x0:
@@ -451,10 +466,16 @@ unsigned int tempdivresult = 0;
 			}
 			break;
 		case opj:
+			#ifdef __VerboseDebug__
+				printf("OP_JUMP Opcode: 0x%02x imm(hex) = 0x%x imm(decimal) = %d  rd = x%2d \n",df.opcode,df.imm,df.imm,df.rd);
+			#endif
 			regs[df.rd] = pc + 4;
 			pc = pc + df.imm - 4;
 			break;
 		case opji:
+			#ifdef __VerboseDebug__
+				printf("OP_JUMPI Opcode: 0x%02x imm(hex) = 0x%x imm(decimal) = %d  rd = x%2d \n",df.opcode,df.imm,df.imm,df.rd);
+			#endif
 			switch(df.funct3)
 			{
 				case 0x0:
@@ -468,9 +489,15 @@ unsigned int tempdivresult = 0;
 			}
 			break;
 		case oplui:
+			#ifdef __VerboseDebug__
+				printf("LUI Opcode: 0x%02x imm(hex) = 0x%x imm(decimal) = %d  rd = x%2d \n",df.opcode,df.imm,df.imm,df.rd);
+			#endif
 			regs[df.rd] = df.imm;
 			break;
 		case opauipc:
+			#ifdef __VerboseDebug__
+				printf("AUIPC Opcode: 0x%02x imm(hex) = 0x%x imm(decimal) = %d  rd = x%2d \n",df.opcode,df.imm,df.imm,df.rd);
+			#endif
 			regs[df.rd] = pc +  df.imm;
 			break;
 		default:

@@ -19,6 +19,7 @@ unsigned int a = 0;
 unsigned int b = 0;
 unsigned int bzero = 0;
 unsigned int tempdivresult = 0;
+unsigned int tempreadval = 0;
 
 	switch(df.opcode)
 	{
@@ -267,7 +268,7 @@ unsigned int tempdivresult = 0;
 					regs[df.rd] = ((signed int)regs[df.rs1] < (signed int)df.imm) ? 1:0;
 					break;
 				case 0x3:
-					df.imm = df.imm & 0x00000fff;
+					//df.imm = df.imm & 0x00000fff;
 					regs[df.rd] = (regs[df.rs1] < df.imm) ? 1:0;
 					break;
 
@@ -378,32 +379,54 @@ unsigned int tempdivresult = 0;
 			tempstore = 0;
 			tempadd = 0;
 			tempadd = regs[df.rs1]+df.imm;
+			tempreadval = 0; 
 			switch(df.funct3)
 			{
-				case 0x0:
+				case 0x0://SB
+					tempreadval = ReadMem(umem, tempadd);
 					switch(tempadd%4)
 					{
 						case 0: tempstore = (regs[df.rs2] & 0x000000ff);
+								tempstore = tempstore | (tempreadval & 0xffffff00);
 							break;
 						case 1: tempstore = (regs[df.rs2] & 0x000000ff) << 8;
+								tempstore = tempstore | (tempreadval & 0xffff00ff);
 							break;
 						case 2: tempstore = (regs[df.rs2] & 0x000000ff) << 16;
+								tempstore = tempstore | (tempreadval & 0xff00ffff);
 							break;
 						case 3: tempstore = (regs[df.rs2] & 0x000000ff) << 24;
+								tempstore = tempstore | (tempreadval & 0x00ffffff);
 							break;
 						default:
 							break;
 					}
+					
+					//printf("Store byte detetcted\n");
+					//printf("0x%08x\n",tempreadval);
+					
 					WriteMem(umem,tempadd,tempstore);
+					//printf("Store byte detetcted 2\n");
+					//printf("0x%08x\n",tempreadval);
+					
 					//WriteMem(umem,df.rs1+df.imm,(*(umem+(df.rs1+df.imm)/4)&ffff00)|(regs[df.rs2] & 0xff))
 					//*(umem+(df.rs1+df.imm)/4) & 0x80 ? ((*(umem+(df.rs1+df.imm)/4))&0xff)|0xffff00 : (*(umem+(df.rs1+df.imm)/4))&0xff = regs[df.rs2] & 0xff;
 					break;
-				case 0x1:
+				case 0x1://SH
+					tempreadval = ReadMem(umem, tempadd);
+					//printf("Store Higher detetcted\n");
+					//printf("0x%08x\n",tempreadval);
 					switch(tempadd%4)
 					{
 						case 0: tempstore = (regs[df.rs2] & 0x0000ffff);
+								tempstore = tempstore | (tempreadval & 0xffff0000);
 							break;
 						case 2: tempstore = (regs[df.rs2] & 0x0000ffff) << 16;
+								//printf("before 0x%08x\n",tempstore);
+								tempstore = tempstore | (tempreadval & 0x0000ffff);
+								//printf("after 0x%08x\n",tempstore);
+								//if(tempreadval != 0)
+								//	exit(0);
 							break;
 						default:
 							printf("Error : Non aligned address 0x%08x for 2 byte data storing\n", tempadd);
@@ -413,7 +436,7 @@ unsigned int tempdivresult = 0;
 					//WriteMem(umem,df.rs1+df.imm,(*(umem+(df.rs1+df.imm)/4)&ff0000)|(regs[df.rs2] & 0xffff))
 					//*(umem+(df.rs1+df.imm)) & 0x8000 ? ((*(umem+(df.rs1+df.imm)))&0xffff)|0xff0000 : (*(umem+(df.rs1+df.imm)))&0xffff = regs[df.rs2] & 0xffff;
 					break;
-				case 0x2:
+				case 0x2://SW
 					if(tempadd%4 == 0)
 						WriteMem(umem,tempadd,regs[df.rs2]);
 					else

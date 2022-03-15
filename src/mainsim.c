@@ -62,8 +62,11 @@ int main(int argc,char *argv[] ){
 		singlestep = 1;
 	#endif
 
-	while(!(inst_mem[pc/4] == 0x8067 && x[raindex]== 0))
+	while(!(inst_mem[pc/4] == 0x8067 && x[raindex]== 0) && !(inst_mem[pc/4] == 0x0))
 	{
+		#ifdef __pcdump__
+			printf("0x%08x\n",pc);
+		#endif
 		x[zeroindex] = 0;
 		if(pc%4 != 0){
 			printf("Error PC is not 4 byte aligned: pc = %u\n", pc);

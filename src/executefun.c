@@ -474,13 +474,14 @@ unsigned int tempdivresult = 0;
 			break;
 		case opji:
 			#ifdef __VerboseDebug__
-				printf("OP_JUMPI Opcode: 0x%02x imm(hex) = 0x%x imm(decimal) = %d  rd = x%2d rs1 = x%2d \n",df.opcode,df.imm,df.imm,df.rd, df.rs1);
+				printf("OP_JUMPI(JALR) Opcode: 0x%02x imm(hex) = 0x%x imm(decimal) = %d  rd = x%2d rs1 = x%2d \n",df.opcode,df.imm,df.imm,df.rd, df.rs1);
 			#endif
 			switch(df.funct3)
 			{
 				case 0x0:
 					regs[df.rd] = pc + 4;
 					pc = regs[df.rs1] + df.imm - 4;
+					pc = pc & 0xfffffffe;
 					break;
 				default:
 					printf("Entered default in jump instruction funct3\n");

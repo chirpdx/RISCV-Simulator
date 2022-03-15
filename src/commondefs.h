@@ -1,7 +1,8 @@
 #ifndef myheader
 #define myheader
 
-//#define __verbose__
+//#define __verbose__	//without single stepping
+//#define __VerboseDebug__	//keep this also to make singlestepping and breakpoint active
 
 #define opcodemask  0x0000007f
 #define rdmask      0x00000f80
@@ -10,10 +11,7 @@
 #define rs2mask     0x01f00000
 #define funct7mask  0xfe000f80
 #define imm12Imask  0xfff00000
-//#define imm12Smask
-//#define imm13Bmask
-//#define imm32Umask
-//#define imm21Jmask
+
 #define opralu 0x33
 #define opialu 0x13
 #define opload 0x03

@@ -164,7 +164,7 @@ unsigned int tempdivresult = 0;
 						regs[df.rd] = tempdivresult;
 						break;
 					default:
-						printf("Entered default in alu register instruction in funct3 when funct7 is 0x1\n");
+						printf("Entered default in alu register M extension instruction in funct3 when funct7 is 0x1\n");
 						exit(0);
 						break; 
 				}

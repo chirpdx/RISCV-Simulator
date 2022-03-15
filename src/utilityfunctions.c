@@ -6,16 +6,13 @@
 int DisplayRegs(unsigned int regs[32], unsigned int pc){
 	int i = 0;
 	int j = 0;
-	printf("pc  : 0x%08x\n", pc);
-	#ifdef __verbose__
-		printf("Verbose mode triggered\n");
-	#endif
 	for(i = 0; i < 8; i++)
 	{
 		for(j = 0; j < 4; j++)
 			printf("\t%4s -> x%2d :   0x%08x", regnames[i*4 + j], i*4 + j, regs[i*4 + j]);
 		printf("\n");
 	}
+	printf("pc  : 0x%08x\n", pc);
 	return 0;
 }
 

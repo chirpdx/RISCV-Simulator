@@ -8,13 +8,21 @@ rvsim_verbose: compile_verbose
 	cd $(src_dir); \
 	./rvsimv.out -mem $(memfile) -sp $(spnum) -pc $(pcnum)
 
+rvsim_singleverbose: compile_singleverbose
+	cd $(src_dir); \
+	./rvsimsv.out -mem $(memfile) -sp $(spnum) -pc $(pcnum)
+
 rvsim: compile
 	cd $(src_dir); \
 	./rvsim.out -mem $(memfile) -sp $(spnum) -pc $(pcnum)
 
 compile_verbose:
 	cd $(src_dir); \
-	gcc -o rvsimv.out -D__VerboseDebug__ -D__verbose__ commondefs.h decodefun.c executefun.c mainsim.c utilityfunctions.c
+	gcc -o rvsimv.out -D__verbose__ commondefs.h decodefun.c executefun.c mainsim.c utilityfunctions.c
+
+compile_singleverbose:
+	cd $(src_dir); \
+	gcc -o rvsimsv.out -D__VerboseDebug__ -D__verbose__ commondefs.h decodefun.c executefun.c mainsim.c utilityfunctions.c
 
 compile:
 	cd $(src_dir); \

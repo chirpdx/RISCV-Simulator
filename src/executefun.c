@@ -474,7 +474,7 @@ unsigned int tempdivresult = 0;
 			break;
 		case opji:
 			#ifdef __VerboseDebug__
-				printf("OP_JUMPI Opcode: 0x%02x imm(hex) = 0x%x imm(decimal) = %d  rd = x%2d \n",df.opcode,df.imm,df.imm,df.rd);
+				printf("OP_JUMPI Opcode: 0x%02x imm(hex) = 0x%x imm(decimal) = %d  rd = x%2d rs1 = x%2d \n",df.opcode,df.imm,df.imm,df.rd, df.rs1);
 			#endif
 			switch(df.funct3)
 			{

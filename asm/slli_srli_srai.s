@@ -1,0 +1,12 @@
+	addi t0,t0,0
+	li t1,-1
+	slli t1,t1,31
+	li t2,100
+	slli t3,t2,2
+	li t2,-1
+	srli t2,t1,10
+	srli t3,t2,31
+	srai t4,t2,0
+	srai t5,zero,3
+	srai t6,t1,5
+	jr	ra

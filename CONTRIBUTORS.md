@@ -3,3 +3,4 @@
 * [Chirag Chaudhari](https://github.com/chirpdx)
 * [Varden Prabahar](https://github.com/nagavar2)
 * [Sai Krishnan](https://github.com/saikris2)
+* [Thanmai Chochipatla](https://github.com/thanmai-ch)

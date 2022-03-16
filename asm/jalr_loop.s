@@ -1,0 +1,9 @@
+	addi t1,t1,0
+	addi t0,t0,12
+	jalr ra,t0,12
+	li ra,0
+	jr ra
+	addi t6,zero,100
+	addi a0,zero,100
+	jalr x3,ra,0 
+	addi a1,zero,100

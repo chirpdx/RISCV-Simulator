@@ -7,9 +7,13 @@ Make targets
 Possible command line arguments, if not default
 
 Makefile    Target exe
+
 pcnum       -pc
+
 spnum       -sp
+
 memfile     -mem
+
 
 e.g
 make rvsim pcnum=c spnum=65536 memfile=../tests/rvn.mem

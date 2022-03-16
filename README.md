@@ -19,5 +19,5 @@ e.g
 make rvsim pcnum=c spnum=65536 memfile=../tests/rvn.mem
 
 
-##github repo
+# github repo
 * [github repo](https://github.com/chirpdx/RISCV-Simulator)

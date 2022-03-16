@@ -5,6 +5,7 @@ Make targets
 3. make rvsim_singleverbose      (verbose along with extra verbose and singlestepping)
 
 Possible command line arguments, if not default
+
 Makefile    Target exe
 pcnum       -pc
 spnum       -sp
